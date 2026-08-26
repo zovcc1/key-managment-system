@@ -1,0 +1,164 @@
+/**
+ * Page-level layout. Nocturne supplies component classes (.card/.btn/.table/
+ * .tag/.field/.dialog/.nav) but no app-shell grid — that's product-specific,
+ * so it lives here, built only from the system's own tokens (var(--space-*),
+ * var(--color-*), var(--radius-*)). No Tailwind, no third-party layout kit.
+ */
+
+.kr-shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+}
+
+.kr-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--space-3);
+  background: var(--color-surface);
+  border-inline-end: 1px solid var(--color-divider);
+}
+
+.kr-sidebar .nav-brand { margin-right: 0; padding-inline: var(--space-2); }
+.kr-sidebar-tagline {
+  font-size: 11px;
+  padding-inline: var(--space-2);
+  margin-bottom: var(--space-4);
+  color: color-mix(in srgb, var(--color-text) 55%, transparent);
+}
+
+.kr-navlist { display: flex; flex-direction: column; gap: 2px; list-style: none; margin: 0; padding: 0; }
+.kr-navlist a {
+  display: block;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 14px;
+}
+.kr-navlist a:hover { background: color-mix(in srgb, var(--color-text) 7%, transparent); }
+.kr-navlist a[aria-current='page'] {
+  color: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 12%, transparent);
+}
+
+.kr-main { display: flex; flex-direction: column; min-width: 0; }
+
+.kr-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-6);
+  border-bottom: 1px solid var(--color-divider);
+}
+.kr-header-titles { margin-right: auto; }
+.kr-header-titles h1 { font-size: 20px; margin: 0; }
+.kr-header-path { font-size: 12px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.kr-header-meta { display: flex; align-items: center; gap: var(--space-3); font-size: 13px; }
+.kr-header-lockin { font-family: var(--font-mono); font-size: 12px; color: color-mix(in srgb, var(--color-text) 55%, transparent); }
+.kr-header-lockin.kr-lockin-soon { color: var(--color-accent); animation: krPulse 1.4s ease-in-out infinite; }
+
+.kr-content { padding: var(--space-6); display: flex; flex-direction: column; gap: var(--space-4); flex: 1; }
+
+.kr-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); }
+.kr-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-3); }
+.kr-stack { display: flex; flex-direction: column; gap: var(--space-3); }
+.kr-row { display: flex; align-items: center; gap: var(--space-2); }
+.kr-row-between { display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); }
+.kr-wrap { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+
+.kr-tile-value { font-size: 28px; font-family: var(--font-heading); font-weight: var(--font-heading-weight); }
+.kr-tile-label { font-size: 12px; color: color-mix(in srgb, var(--color-text) 60%, transparent); }
+
+.kr-bar-track {
+  height: 6px; border-radius: 3px; background: var(--color-neutral-800); overflow: hidden;
+}
+.kr-bar-fill { height: 100%; background: var(--color-accent); border-radius: 3px; }
+.kr-bar-fill.kr-bar-danger { background: #d97757; }
+
+.kr-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.kr-dot-ok { background: #7fbf7f; }
+.kr-dot-warn { background: #d9b46a; }
+.kr-dot-bad { background: #d97878; }
+
+.kr-empty {
+  padding: var(--space-6);
+  text-align: center;
+  color: color-mix(in srgb, var(--color-text) 50%, transparent);
+  font-size: 13px;
+}
+
+/* — toasts — */
+.kr-toast-stack {
+  position: fixed; bottom: var(--space-6); right: var(--space-6); z-index: 80;
+  display: flex; flex-direction: column; gap: var(--space-2); width: min(360px, calc(100vw - var(--space-8)));
+}
+html[dir='rtl'] .kr-toast-stack { right: auto; left: var(--space-6); }
+.kr-toast { font-size: 13px; }
+
+/* — login — */
+.kr-login-wrap {
+  min-height: 100vh; display: grid; place-items: center; padding: var(--space-4);
+}
+.kr-login-card { width: min(380px, 100%); }
+
+/* — locked overlay — */
+.kr-locked-wrap {
+  min-height: 100vh; display: grid; place-items: center; padding: var(--space-4);
+  background: var(--color-bg);
+}
+
+/* — key map — */
+.kr-map-wrap { position: relative; border-radius: var(--radius-md); background: var(--color-surface); overflow: hidden; }
+.kr-map-svg { width: 100%; height: 560px; display: block; cursor: grab; }
+.kr-map-legend {
+  position: absolute; top: var(--space-3); left: var(--space-3);
+  display: flex; flex-direction: column; gap: 6px; font-size: 11px;
+  padding: var(--space-2) var(--space-3); border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-bg) 75%, transparent);
+}
+html[dir='rtl'] .kr-map-legend { left: auto; right: var(--space-3); }
+.kr-map-zoom {
+  position: absolute; bottom: var(--space-3); left: var(--space-3);
+  display: flex; gap: 4px;
+}
+html[dir='rtl'] .kr-map-zoom { left: auto; right: var(--space-3); }
+.kr-map-inspector {
+  position: absolute; top: var(--space-3); right: var(--space-3);
+  width: 260px;
+}
+html[dir='rtl'] .kr-map-inspector { right: auto; left: var(--space-3); }
+.kr-map-node { cursor: pointer; }
+.kr-map-node-label { font-size: 10px; fill: var(--color-text); pointer-events: none; }
+.kr-map-edge { stroke: var(--color-divider); stroke-width: 1.5; fill: none; }
+.kr-map-edge.kr-edge-lit { stroke: var(--color-accent); }
+
+/* — destroy dialog — */
+.kr-steps { display: flex; gap: 6px; }
+.kr-step { flex: 1; height: 3px; border-radius: 2px; background: var(--color-neutral-800); }
+.kr-step.kr-step-done { background: var(--color-accent); }
+.kr-confirm-id {
+  font-family: var(--font-mono);
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--color-neutral-900);
+}
+
+/* — isolated viewer — */
+.kr-isolated {
+  border: 1px dashed var(--color-accent);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+}
+.kr-isolated-value { font-family: var(--font-mono); font-size: 13px; word-break: break-all; }
+
+/* — sparkline — */
+.kr-spark { display: block; }
+.kr-spark-bar { fill: var(--color-accent); }
+
+@media (max-width: 860px) {
+  .kr-shell { grid-template-columns: 1fr; }
+  .kr-sidebar { flex-direction: row; overflow-x: auto; }
+  .kr-grid-4, .kr-grid-2 { grid-template-columns: 1fr; }
+}

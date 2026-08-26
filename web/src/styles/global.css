@@ -1,0 +1,32 @@
+@import './nocturne.css';
+@import './layout.css';
+
+:root {
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+html, body, #root {
+  margin: 0;
+  height: 100%;
+  background: var(--color-bg);
+}
+
+a { color: var(--color-accent); }
+a:hover { color: var(--color-accent-300); }
+
+@keyframes krPulse { 0%, 100% { opacity: .3 } 50% { opacity: 1 } }
+@keyframes krScan { from { background-position: 0 0 } to { background-position: 40px 0 } }
+
+::-webkit-scrollbar { width: 9px; height: 9px }
+::-webkit-scrollbar-thumb { background: #3f424d; border-radius: 6px }
+::-webkit-scrollbar-track { background: transparent }
+
+button { font: inherit; }
+
+/* RTL: the fading-rule gradients and most flex layouts mirror automatically
+   via [dir="rtl"], but a handful of hand-placed absolute-position elements
+   (map legend, zoom controls, toasts) are flipped explicitly per-component. */
+html[dir="rtl"] .mono-ltr {
+  direction: ltr;
+  unicode-bidi: embed;
+}

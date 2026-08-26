@@ -1,0 +1,1359 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/nocturne-e6738515-3dea-471a-ba5b-331e75145fba/styles.css">
+  <script src="_ds/nocturne-e6738515-3dea-471a-ba5b-331e75145fba/_ds_bundle.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+  <style>
+    html, body { margin: 0; height: 100%; background: var(--color-bg); }
+    a { color: var(--color-accent); }
+    a:hover { color: var(--color-accent-300); }
+    @keyframes krPulse { 0%, 100% { opacity: .3 } 50% { opacity: 1 } }
+    @keyframes krScan { from { background-position: 0 0 } to { background-position: 40px 0 } }
+    ::-webkit-scrollbar { width: 9px; height: 9px }
+    ::-webkit-scrollbar-thumb { background: #3f424d; border-radius: 6px }
+    ::-webkit-scrollbar-track { background: transparent }
+  </style>
+</helmet>
+
+<div style="display:flex; height:100vh; overflow:hidden; background:var(--color-bg); color:var(--color-text); font-family:var(--font-body); font-size:13px" onMouseDown="{{ poke }}" onKeyDown="{{ poke }}">
+
+  <aside style="width:206px; flex:0 0 206px; border-right:1px solid var(--color-divider); display:flex; flex-direction:column; padding:16px 0">
+    <div style="padding:0 16px 18px; display:flex; align-items:baseline; gap:7px">
+      <span style="font-family:var(--font-heading); font-weight:500; letter-spacing:.13em; font-size:14px; text-transform:uppercase">Keyring</span>
+      <span style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; color:var(--color-neutral-600)">v2.4</span>
+    </div>
+    <nav style="display:flex; flex-direction:column; gap:1px; padding:0 8px">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="7">
+        <button onClick="{{ n.go }}" style="{{ n.style }}" style-hover="background:color-mix(in srgb, var(--color-accent) 10%, transparent)">
+          <span style="display:flex; align-items:center; gap:9px">
+            <span style="{{ n.markStyle }}"></span>
+            <span>{{ n.label }}</span>
+          </span>
+          <span style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; color:var(--color-neutral-600)">{{ n.badge }}</span>
+        </button>
+      </sc-for>
+    </nav>
+    <div style="margin-top:auto; padding:14px 16px 0; border-top:1px solid var(--color-divider); display:flex; flex-direction:column; gap:7px">
+      <div style="display:flex; align-items:center; gap:7px; font-size:11px; color:var(--color-neutral-400)">
+        <span style="width:6px; height:6px; border-radius:50%; background:#5fd0a6; animation:krPulse 2.6s ease-in-out infinite"></span>
+        <span>Provider: {{ providerLabel }}</span>
+      </div>
+      <div style="font-size:11px; color:var(--color-neutral-500)">Root secret held externally. This console never receives key material.</div>
+    </div>
+  </aside>
+
+  <main style="flex:1; min-width:0; display:flex; flex-direction:column">
+    <header style="display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 20px; border-bottom:1px solid var(--color-divider)">
+      <div style="display:flex; align-items:baseline; gap:12px">
+        <h1 style="font-size:16px; margin:0; letter-spacing:-0.01em">{{ title }}</h1>
+        <span style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; color:var(--color-neutral-600)">{{ routePath }}</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:14px; font-size:11px; color:var(--color-neutral-400)">
+        <span style="font-family:'JetBrains Mono',ui-monospace,monospace">Session locks in {{ lockIn }}</span>
+        <span style="width:1px; height:14px; background:var(--color-divider)"></span>
+        <span>Operator <span style="color:var(--color-text)">a.mensah</span> · read/write</span>
+        <button class="btn btn-secondary" style="font-size:11px; padding:3px 9px" onClick="{{ lockNow }}">Lock</button>
+      </div>
+    </header>
+
+    <div style="flex:1; min-height:0; overflow:auto; padding:18px 20px 44px">
+
+      <sc-if value="{{ isDash }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex; flex-direction:column; gap:14px; max-width:1180px">
+          <div style="display:grid; grid-template-columns:minmax(320px,1.15fr) 2fr; gap:14px">
+            <section class="card" style="padding:14px">
+              <div style="display:flex; justify-content:space-between; align-items:baseline">
+                <span style="font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--color-neutral-500)">Active KEK</span>
+                <span class="tag tag-outline" style="font-size:10px">{{ kekStateLabel }}</span>
+              </div>
+              <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:17px; margin-top:9px">{{ activeKek.id }}</div>
+              <div style="font-size:11px; color:var(--color-neutral-500); margin-top:3px">{{ activeKek.algorithm }} · wraps {{ activeKek.depsFmt }} subject keys' DEKs</div>
+              <div style="display:flex; justify-content:space-between; font-size:11px; margin-top:14px; color:var(--color-neutral-400)">
+                <span>Age {{ kekAge }} days</span>
+                <span>Rotation deadline day 90</span>
+              </div>
+              <div style="height:7px; border-radius:4px; background:var(--color-neutral-900); margin-top:6px; overflow:hidden; border:1px solid var(--color-divider)">
+                <div style="{{ kekBarStyle }}"></div>
+              </div>
+              <div style="display:flex; align-items:center; gap:7px; margin-top:9px; font-size:11px">
+                <span style="{{ kekFlagDot }}"></span>
+                <span style="{{ kekFlagText }}">{{ kekFlag }}</span>
+              </div>
+              <button class="btn btn-primary" style="margin-top:13px; width:100%; font-size:12px" onClick="{{ openRotate }}">Rotate KEK</button>
+            </section>
+
+            <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:14px; align-content:start">
+              <sc-for list="{{ tiles }}" as="t" hint-placeholder-count="4">
+                <div class="card" style="padding:12px 13px">
+                  <div style="font-size:10px; text-transform:uppercase; letter-spacing:.09em; color:var(--color-neutral-500); min-height:26px">{{ t.label }}</div>
+                  <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:25px; margin-top:5px; letter-spacing:-0.02em; color:{{ t.color }}">{{ t.value }}</div>
+                  <div style="font-size:11px; color:var(--color-neutral-500); margin-top:3px">{{ t.note }}</div>
+                </div>
+              </sc-for>
+              <section class="card" style="grid-column:span 4; padding:13px; border-color:{{ spike.border }}">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px">
+                  <div>
+                    <div style="font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--color-neutral-500)">Failed decryption attempts · last 24h</div>
+                    <div style="display:flex; align-items:baseline; gap:10px; margin-top:5px">
+                      <span style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:24px; color:{{ spike.color }}">{{ spike.peakFmt }}</span>
+                      <span style="font-size:12px; color:{{ spike.color }}">{{ spike.headline }}</span>
+                    </div>
+                    <div style="font-size:11px; color:var(--color-neutral-400); margin-top:4px">{{ spike.detail }}</div>
+                  </div>
+                  <div style="display:flex; gap:7px; flex:0 0 auto">
+                    <button class="btn btn-secondary" style="font-size:11px" onClick="{{ goAudit }}">Open audit log</button>
+                    <button class="btn btn-primary" style="font-size:11px" onClick="{{ ackSpike }}">Acknowledge</button>
+                  </div>
+                </div>
+                <div style="display:flex; align-items:flex-end; gap:3px; height:96px; margin-top:12px">
+                  <sc-for list="{{ spark }}" as="b" hint-placeholder-count="24">
+                    <div title="{{ b.title }}" style="flex:1; display:flex; flex-direction:column; justify-content:flex-end; height:100%; gap:4px">
+                      <div style="{{ b.style }}"></div>
+                      <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; text-align:center; color:{{ b.labelColor }}">{{ b.hour }}</div>
+                    </div>
+                  </sc-for>
+                </div>
+              </section>
+            </div>
+          </div>
+
+          <section style="border:1px solid var(--color-divider); border-radius:var(--radius-md); display:grid; grid-template-columns:repeat(4,1fr)">
+            <sc-for list="{{ health }}" as="h" hint-placeholder-count="4">
+              <div style="padding:11px 13px; border-right:1px solid var(--color-divider); display:flex; gap:9px; align-items:flex-start">
+                <span style="{{ h.dot }}"></span>
+                <div>
+                  <div style="font-size:11px; color:var(--color-neutral-500); text-transform:uppercase; letter-spacing:.08em">{{ h.label }}</div>
+                  <div style="font-size:12.5px; margin-top:2px; color:{{ h.color }}">{{ h.value }}</div>
+                </div>
+              </div>
+            </sc-for>
+          </section>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isMap }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex; gap:14px; align-items:stretch; height:100%">
+          <div style="flex:1; min-width:0; border:1px solid var(--color-divider); border-radius:var(--radius-md); position:relative; overflow:hidden; background:radial-gradient(1200px 600px at 20% 0%, #1b1d2d, var(--color-bg))">
+            <div style="position:absolute; inset:0; overflow:hidden" ref="{{ mapRef }}" onMouseLeave="{{ clearHover }}">
+              <div style="{{ stageStyle }}">
+                <svg width="980" height="640" viewBox="0 0 980 640" style="position:absolute; left:0; top:0">
+                  <sc-for list="{{ edges }}" as="e" hint-placeholder-count="20">
+                    <path d="{{ e.d }}" fill="none" stroke="{{ e.stroke }}" stroke-width="{{ e.w }}" stroke-dasharray="{{ e.dash }}"></path>
+                  </sc-for>
+                </svg>
+                <sc-for list="{{ nodes }}" as="n" hint-placeholder-count="22">
+                  <button onClick="{{ n.select }}" onMouseEnter="{{ n.hover }}" onFocus="{{ n.hover }}" style="{{ n.style }}" title="{{ n.title }}">
+                    <span style="{{ n.labelStyle }}">{{ n.label }}</span>
+                    <span style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:9px; opacity:.75">{{ n.sub }}</span>
+                  </button>
+                </sc-for>
+                <sc-if value="{{ hoverCard }}" hint-placeholder-val="{{ false }}">
+                  <div style="{{ hoverCard.style }}">
+                    <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px">{{ hoverCard.id }}</div>
+                    <div style="font-size:12px; margin-top:3px; color:#e08a86">{{ hoverCard.warning }}</div>
+                    <div style="font-size:11px; color:var(--color-neutral-400); margin-top:2px">{{ hoverCard.downstream }}</div>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+            <div style="position:absolute; left:12px; bottom:12px; display:flex; flex-direction:column; gap:5px; padding:9px 11px; border:1px solid var(--color-divider); border-radius:var(--radius-sm); background:color-mix(in srgb, var(--color-bg) 86%, transparent)">
+              <div style="font-size:10px; text-transform:uppercase; letter-spacing:.09em; color:var(--color-neutral-500)">Legend</div>
+              <sc-for list="{{ legend }}" as="l" hint-placeholder-count="4">
+                <div style="display:flex; align-items:center; gap:7px; font-size:11px">
+                  <span style="{{ l.dot }}"></span>
+                  <span style="{{ l.textStyle }}">{{ l.label }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="position:absolute; right:12px; top:12px; display:flex; gap:5px">
+              <button class="btn btn-secondary" style="font-size:11px; padding:3px 9px" onClick="{{ zoomOut }}">−</button>
+              <button class="btn btn-secondary" style="font-size:11px; padding:3px 9px" onClick="{{ zoomIn }}">+</button>
+              <button class="btn btn-secondary" style="font-size:11px; padding:3px 9px" onClick="{{ zoomFit }}">Fit</button>
+            </div>
+            <div style="position:absolute; left:12px; top:12px; font-size:11px; color:var(--color-neutral-500)">Tab moves between nodes · hover or focus illuminates downstream dependents</div>
+          </div>
+
+          <aside style="width:326px; flex:0 0 326px; border:1px solid var(--color-divider); border-radius:var(--radius-md); padding:14px; overflow:auto">
+            <sc-if value="{{ sel }}" hint-placeholder-val="{{ false }}">
+              <div>
+                <div style="display:flex; justify-content:space-between; align-items:center">
+                  <span style="font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--color-neutral-500)">{{ sel.typeLabel }}</span>
+                  <button class="btn btn-ghost" style="font-size:11px" onClick="{{ clearSel }}">Close</button>
+                </div>
+                <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:15px; margin-top:8px; {{ sel.idDecor }}">{{ sel.id }}</div>
+                <div style="display:flex; align-items:center; gap:7px; margin-top:7px">
+                  <span style="{{ sel.dot }}"></span>
+                  <span style="font-size:12px">{{ sel.stateLabel }}</span>
+                </div>
+                <dl style="margin:14px 0 0; display:grid; grid-template-columns:1fr 1fr; gap:10px 12px">
+                  <sc-for list="{{ sel.meta }}" as="m" hint-placeholder-count="6">
+                    <div>
+                      <dt style="font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--color-neutral-500)">{{ m.k }}</dt>
+                      <dd style="margin:2px 0 0; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:12px">{{ m.v }}</dd>
+                    </div>
+                  </sc-for>
+                </dl>
+                <div style="margin-top:14px; padding:10px; border:1px solid #6d3a38; border-radius:var(--radius-sm); background:color-mix(in srgb, #d9615c 8%, transparent)">
+                  <div style="font-size:11px; color:var(--color-neutral-300)">Blast radius</div>
+                  <div style="font-size:13px; margin-top:2px">{{ sel.blast }}</div>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:6px; margin-top:14px">
+                  <sc-for list="{{ sel.actions }}" as="a" hint-placeholder-count="2">
+                    <button class="{{ a.cls }}" style="{{ a.style }}" onClick="{{ a.run }}">{{ a.label }}</button>
+                  </sc-for>
+                  <div style="font-size:11px; color:var(--color-neutral-500)">{{ sel.actionNote }}</div>
+                </div>
+              </div>
+            </sc-if>
+            <sc-if value="{{ noSel }}" hint-placeholder-val="{{ true }}">
+              <div style="font-size:12px; color:var(--color-neutral-500)">Select a node to inspect its metadata, dependent count, and the actions legal for its current state.</div>
+            </sc-if>
+          </aside>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isKeys }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:12px">
+          <div style="display:flex; gap:9px; align-items:center; flex-wrap:wrap">
+            <input class="input" style="width:210px; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:12px" placeholder="Search by key id" value="{{ keySearch }}" onChange="{{ setKeySearch }}">
+            <span style="width:1px; height:18px; background:var(--color-divider)"></span>
+            <sc-for list="{{ keyChips }}" as="c" hint-placeholder-count="8">
+              <button onClick="{{ c.toggle }}" style="{{ c.style }}">{{ c.label }}</button>
+            </sc-for>
+            <span style="margin-left:auto; font-size:11px; color:var(--color-neutral-500)">{{ keyCountLabel }}</span>
+          </div>
+          <table class="table" style="font-size:12.5px">
+            <thead>
+              <tr>
+                <sc-for list="{{ keyCols }}" as="c" hint-placeholder-count="7">
+                  <th style="{{ c.style }}"><button onClick="{{ c.sort }}" style="all:unset; cursor:pointer; font:inherit; color:inherit">{{ c.label }}</button></th>
+                </sc-for>
+                <th style="text-align:right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <sc-for list="{{ keyRows }}" as="r" hint-placeholder-count="10">
+                <tr style="{{ r.rowStyle }}">
+                  <td style="{{ r.idStyle }}">{{ r.id }}</td>
+                  <td>{{ r.type }}</td>
+                  <td>
+                    <span style="display:inline-flex; align-items:center; gap:6px">
+                      <span style="{{ r.dot }}"></span>
+                      <span>{{ r.stateLabel }}</span>
+                    </span>
+                  </td>
+                  <td style="font-family:'JetBrains Mono',ui-monospace,monospace; color:var(--color-neutral-400)">{{ r.created }}</td>
+                  <td style="font-family:'JetBrains Mono',ui-monospace,monospace; text-align:right">{{ r.deps }}</td>
+                  <td style="font-family:'JetBrains Mono',ui-monospace,monospace; color:var(--color-neutral-400)">{{ r.rotated }}</td>
+                  <td style="text-align:right; white-space:nowrap">
+                    <span style="display:inline-flex; gap:5px; justify-content:flex-end">
+                      <sc-for list="{{ r.actions }}" as="a" hint-placeholder-count="2">
+                        <button class="{{ a.cls }}" style="{{ a.style }}" onClick="{{ a.run }}">{{ a.label }}</button>
+                      </sc-for>
+                      <span style="font-size:11px; color:var(--color-neutral-600)">{{ r.noActions }}</span>
+                    </span>
+                  </td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isRewrap }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:14px; max-width:960px">
+          <div style="display:flex; gap:11px; align-items:center; padding:11px 13px; border:1px solid var(--color-accent-700); border-radius:var(--radius-md); background:color-mix(in srgb, var(--color-accent) 9%, transparent)">
+            <span style="width:8px; height:8px; border-radius:50%; background:var(--color-accent); flex:0 0 auto"></span>
+            <div>
+              <div style="font-size:13.5px">Encryption and decryption remain fully available during rewrap.</div>
+              <div style="font-size:11.5px; color:var(--color-neutral-400); margin-top:2px">No read path is interrupted. Aborting the job leaves DEKs split across two KEKs and requires a full restart.</div>
+            </div>
+          </div>
+
+          <section class="card" style="padding:14px">
+            <div style="display:flex; justify-content:space-between; align-items:baseline">
+              <div>
+                <div style="font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--color-neutral-500)">Rewrap job</div>
+                <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:15px; margin-top:5px">{{ rewrap.jobId }}</div>
+              </div>
+              <div style="text-align:right">
+                <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:20px">{{ rewrap.countLabel }}</div>
+                <div style="font-size:11px; color:var(--color-neutral-500)">{{ rewrap.rate }}</div>
+              </div>
+            </div>
+            <div style="height:9px; border-radius:5px; border:1px solid var(--color-divider); background:var(--color-neutral-900); margin-top:12px; overflow:hidden">
+              <div style="{{ rewrap.barStyle }}"></div>
+            </div>
+            <div style="display:flex; justify-content:space-between; font-size:11px; color:var(--color-neutral-400); margin-top:6px">
+              <span>{{ rewrap.pct }}% complete · from {{ rewrap.from }} to {{ rewrap.to }}</span>
+              <span>ETA {{ rewrap.eta }}</span>
+            </div>
+            <div style="display:flex; gap:7px; margin-top:14px; align-items:center">
+              <button class="btn btn-primary" style="font-size:12px" onClick="{{ rewrap.toggle }}">{{ rewrap.toggleLabel }}</button>
+              <button class="btn btn-secondary" style="font-size:12px" onClick="{{ rewrap.showFailures }}">{{ rewrap.failuresLabel }}</button>
+              <span style="display:inline-flex; align-items:center; gap:7px; font-size:11.5px; color:var(--color-neutral-400); margin-left:5px">
+                <span style="{{ rewrap.stateDot }}"></span>
+                <span>{{ rewrap.stateLabel }}</span>
+              </span>
+            </div>
+          </section>
+
+          <sc-if value="{{ rewrap.failuresOpen }}" hint-placeholder-val="{{ true }}">
+            <section>
+              <div style="font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--color-neutral-500); margin-bottom:7px">Failed items · {{ rewrap.failCount }}</div>
+              <table class="table" style="font-size:12.5px">
+                <thead><tr><th>Item</th><th>Subject key</th><th>Reason</th><th>Attempts</th><th style="text-align:right">Action</th></tr></thead>
+                <tbody>
+                  <sc-for list="{{ rewrap.failures }}" as="f" hint-placeholder-count="4">
+                    <tr>
+                      <td style="font-family:'JetBrains Mono',ui-monospace,monospace">{{ f.item }}</td>
+                      <td style="font-family:'JetBrains Mono',ui-monospace,monospace; color:var(--color-neutral-400)">{{ f.subject }}</td>
+                      <td style="color:#e0a05c">{{ f.reason }}</td>
+                      <td style="font-family:'JetBrains Mono',ui-monospace,monospace">{{ f.attempts }}</td>
+                      <td style="text-align:right"><button class="btn btn-secondary" style="font-size:11px; padding:2px 8px" onClick="{{ f.retry }}">{{ f.retryLabel }}</button></td>
+                    </tr>
+                  </sc-for>
+                </tbody>
+              </table>
+            </section>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isPrivacy }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:14px; max-width:1000px">
+          <div style="display:flex; gap:11px; padding:11px 13px; border:1px solid #6b5a2e; border-radius:var(--radius-md); background:color-mix(in srgb, #d9a34a 8%, transparent)">
+            <span style="width:8px; height:8px; border-radius:50%; background:#d9a34a; flex:0 0 auto; margin-top:5px"></span>
+            <div style="font-size:12.5px; color:var(--color-neutral-200); text-wrap:pretty">
+              Crypto-shredding only covers data encrypted by this system. Plaintext exported to spreadsheets, analytics pipelines, or email before deletion is <span style="color:#e0b06a">not covered</span> — those copies must be handled separately and recorded against the same request.
+            </div>
+          </div>
+
+          <div style="display:flex; gap:9px; align-items:center">
+            <input class="input" style="width:280px; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:12px" placeholder="Subject id, e.g. SUBJ-DEMO-4417" value="{{ subjQuery }}" onChange="{{ setSubjQuery }}">
+            <button class="btn btn-primary" style="font-size:12px" onClick="{{ runSubjSearch }}">{{ subjSearchLabel }}</button>
+            <button class="btn btn-ghost" style="font-size:12px" onClick="{{ useDemoSubject }}">Use demo subject</button>
+            <span style="font-size:11.5px; color:#e0817c">{{ subjError }}</span>
+          </div>
+
+          <sc-if value="{{ subject }}" hint-placeholder-val="{{ true }}">
+            <div style="display:grid; grid-template-columns:1.25fr 1fr; gap:14px; align-items:start">
+              <section class="card" style="padding:14px">
+                <div style="display:flex; justify-content:space-between; align-items:baseline">
+                  <div>
+                    <div style="font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--color-neutral-500)">Data subject</div>
+                    <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:16px; margin-top:5px">{{ subject.id }}</div>
+                  </div>
+                  <span style="display:inline-flex; align-items:center; gap:6px; font-size:12px">
+                    <span style="{{ subject.dot }}"></span>
+                    <span>{{ subject.stateLabel }}</span>
+                  </span>
+                </div>
+                <dl style="margin:14px 0 0; display:grid; grid-template-columns:1fr 1fr 1fr; gap:11px">
+                  <sc-for list="{{ subject.meta }}" as="m" hint-placeholder-count="4">
+                    <div>
+                      <dt style="font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--color-neutral-500)">{{ m.k }}</dt>
+                      <dd style="margin:2px 0 0; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:13px">{{ m.v }}</dd>
+                    </div>
+                  </sc-for>
+                </dl>
+                <div style="margin-top:15px; font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--color-neutral-500)">Tables holding this subject</div>
+                <table class="table" style="font-size:12.5px; margin-top:6px">
+                  <thead><tr><th>Table</th><th style="text-align:right">Records</th><th>Wrapped by</th><th>Sample field</th></tr></thead>
+                  <tbody>
+                    <sc-for list="{{ subject.tables }}" as="t" hint-placeholder-count="5">
+                      <tr>
+                        <td style="font-family:'JetBrains Mono',ui-monospace,monospace">{{ t.name }}</td>
+                        <td style="font-family:'JetBrains Mono',ui-monospace,monospace; text-align:right">{{ t.records }}</td>
+                        <td style="font-family:'JetBrains Mono',ui-monospace,monospace; color:var(--color-neutral-400)">{{ t.wrapped }}</td>
+                        <td>
+                          <span style="display:inline-flex; align-items:center; gap:7px">
+                            <span style="font-family:'JetBrains Mono',ui-monospace,monospace; color:var(--color-neutral-300)">{{ t.masked }}</span>
+                            <button class="btn btn-ghost" style="font-size:10.5px; padding:1px 6px" onClick="{{ t.reveal }}">{{ t.revealLabel }}</button>
+                          </span>
+                        </td>
+                      </tr>
+                    </sc-for>
+                  </tbody>
+                </table>
+                <div style="font-size:11px; color:var(--color-neutral-500); margin-top:6px">Every reveal writes an entry to the audit log. Metadata only — no plaintext leaves the isolated viewer.</div>
+              </section>
+
+              <div style="display:flex; flex-direction:column; gap:14px">
+                <section class="card" style="padding:14px">
+                  <div style="font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--color-neutral-500)">Right to erasure</div>
+                  <div style="font-size:12.5px; color:var(--color-neutral-300); margin-top:6px; text-wrap:pretty">Destroys the subject key. Every record wrapped by it — including immutable backups and cold archives — becomes permanently unreadable. There is no recovery path.</div>
+                  <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:22px; margin-top:11px; color:#e0817c">{{ subject.records }}</div>
+                  <div style="font-size:11px; color:var(--color-neutral-500)">records across {{ subject.tableCount }} tables</div>
+                  <button class="btn btn-primary" style="margin-top:13px; width:100%; font-size:12px; color:#e0817c; border-color:#8c4844" onClick="{{ subject.erase }}">{{ subject.eraseLabel }}</button>
+                </section>
+
+                <sc-if value="{{ isolated }}" hint-placeholder-val="{{ false }}">
+                  <section style="border:1px dashed var(--color-accent-700); border-radius:var(--radius-md); padding:13px">
+                    <div style="display:flex; justify-content:space-between; align-items:center">
+                      <span style="font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--color-accent-300)">Isolated viewer</span>
+                      <button class="btn btn-ghost" style="font-size:11px" onClick="{{ closeIsolated }}">Close &amp; clear</button>
+                    </div>
+                    <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:13px; margin-top:9px; color:{{ isolated.color }}; word-break:break-all">{{ isolated.value }}</div>
+                    <div style="font-size:11px; color:var(--color-neutral-500); margin-top:6px">{{ isolated.note }}</div>
+                  </section>
+                </sc-if>
+
+                <sc-if value="{{ certificate }}" hint-placeholder-val="{{ false }}">
+                  <section style="border:1px solid var(--color-divider); border-radius:var(--radius-md); padding:15px; background:linear-gradient(160deg,#1d2030,var(--color-bg))">
+                    <div style="display:flex; justify-content:space-between; align-items:baseline">
+                      <span style="font-size:11px; text-transform:uppercase; letter-spacing:.11em; color:var(--color-accent-300)">Deletion certificate</span>
+                      <span class="tag tag-outline" style="font-size:10px">Signed</span>
+                    </div>
+                    <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:14px; margin-top:10px">{{ certificate.subject }}</div>
+                    <div style="font-size:12.5px; margin-top:9px; color:var(--color-neutral-200)">{{ certificate.headline }}</div>
+                    <dl style="margin:12px 0 0; display:grid; grid-template-columns:1fr 1fr; gap:9px">
+                      <sc-for list="{{ certificate.rows }}" as="c" hint-placeholder-count="6">
+                        <div>
+                          <dt style="font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--color-neutral-500)">{{ c.k }}</dt>
+                          <dd style="margin:2px 0 0; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11.5px; word-break:break-all">{{ c.v }}</dd>
+                        </div>
+                      </sc-for>
+                    </dl>
+                    <div style="display:flex; gap:7px; margin-top:13px">
+                      <button class="btn btn-primary" style="font-size:11.5px" onClick="{{ certificate.export }}">Export certificate</button>
+                      <button class="btn btn-secondary" style="font-size:11.5px" onClick="{{ certificate.print }}">Print</button>
+                    </div>
+                  </section>
+                </sc-if>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isAudit }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex; flex-direction:column; gap:12px">
+          <div style="display:flex; gap:9px; align-items:center; flex-wrap:wrap">
+            <select class="input" style="font-size:12px; width:150px" value="{{ auditActor }}" onChange="{{ setAuditActor }}">
+              <sc-for list="{{ actorOpts }}" as="o" hint-placeholder-count="5"><option value="{{ o.v }}">{{ o.l }}</option></sc-for>
+            </select>
+            <select class="input" style="font-size:12px; width:170px" value="{{ auditOp }}" onChange="{{ setAuditOp }}">
+              <sc-for list="{{ opOpts }}" as="o" hint-placeholder-count="6"><option value="{{ o.v }}">{{ o.l }}</option></sc-for>
+            </select>
+            <select class="input" style="font-size:12px; width:150px" value="{{ auditRange }}" onChange="{{ setAuditRange }}">
+              <sc-for list="{{ rangeOpts }}" as="o" hint-placeholder-count="3"><option value="{{ o.v }}">{{ o.l }}</option></sc-for>
+            </select>
+            <input class="input" style="width:190px; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:12px" placeholder="Filter by key id" value="{{ auditKey }}" onChange="{{ setAuditKey }}">
+            <div style="margin-left:auto; display:flex; gap:7px; align-items:center">
+              <span style="{{ chain.style }}">{{ chain.label }}</span>
+              <button class="btn btn-primary" style="font-size:11.5px" onClick="{{ verifyChain }}">{{ chain.btnLabel }}</button>
+              <button class="btn btn-secondary" style="font-size:11.5px" onClick="{{ exportCsv }}">Export CSV</button>
+            </div>
+          </div>
+          <sc-if value="{{ chain.detail }}" hint-placeholder-val="{{ false }}">
+            <div style="{{ chain.detailStyle }}">{{ chain.detail }}</div>
+          </sc-if>
+          <table class="table" style="font-size:12.5px">
+            <thead><tr><th>Timestamp</th><th>Actor</th><th>Operation</th><th>Key id</th><th>Item id</th><th>Result</th><th style="text-align:right">Entry hash</th></tr></thead>
+            <tbody>
+              <sc-for list="{{ auditRows }}" as="a" hint-placeholder-count="14">
+                <tr style="{{ a.rowStyle }}">
+                  <td style="font-family:'JetBrains Mono',ui-monospace,monospace; color:var(--color-neutral-400); white-space:nowrap">{{ a.ts }}</td>
+                  <td>{{ a.actor }}</td>
+                  <td style="font-family:'JetBrains Mono',ui-monospace,monospace">{{ a.op }}</td>
+                  <td style="font-family:'JetBrains Mono',ui-monospace,monospace; color:var(--color-neutral-400)">{{ a.keyId }}</td>
+                  <td style="font-family:'JetBrains Mono',ui-monospace,monospace; color:var(--color-neutral-400)">{{ a.itemId }}</td>
+                  <td><span style="display:inline-flex; align-items:center; gap:6px"><span style="{{ a.dot }}"></span><span style="color:{{ a.color }}">{{ a.result }}</span></span></td>
+                  <td style="font-family:'JetBrains Mono',ui-monospace,monospace; text-align:right; color:var(--color-neutral-600)">{{ a.hash }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+          <div style="font-size:11px; color:var(--color-neutral-500)">{{ auditCountLabel }} · No plaintext and no key material is recorded in any row.</div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; max-width:1120px; align-items:start">
+          <section class="card" style="padding:14px">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--color-neutral-500)">Key provider</div>
+            <div style="font-size:12px; color:var(--color-neutral-400); margin-top:5px">One interface, four implementations. Swapping providers never moves key material through this console.</div>
+            <div style="display:flex; flex-direction:column; gap:6px; margin-top:11px">
+              <sc-for list="{{ providers }}" as="p" hint-placeholder-count="4">
+                <button onClick="{{ p.pick }}" style="{{ p.style }}">
+                  <span style="display:flex; align-items:center; gap:9px">
+                    <span style="{{ p.mark }}"></span>
+                    <span>
+                      <span style="display:block; font-size:12.5px">{{ p.label }}</span>
+                      <span style="display:block; font-size:11px; color:var(--color-neutral-500)">{{ p.note }}</span>
+                    </span>
+                  </span>
+                  <span style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:10px; color:var(--color-neutral-600)">{{ p.tag }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </section>
+
+          <section class="card" style="padding:14px">
+            <div style="font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--color-neutral-500)">Rotation &amp; alerting</div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-top:11px">
+              <div class="field">
+                <label style="font-size:11px">KEK rotation interval (days)</label>
+                <input class="input" style="font-size:12px; font-family:'JetBrains Mono',ui-monospace,monospace" value="{{ rotInterval }}" onChange="{{ setRotInterval }}">
+              </div>
+              <div class="field">
+                <label style="font-size:11px">Failed-decrypt alert threshold (per hour)</label>
+                <input class="input" style="font-size:12px; font-family:'JetBrains Mono',ui-monospace,monospace" value="{{ alertThreshold }}" onChange="{{ setAlertThreshold }}">
+              </div>
+            </div>
+            <div style="margin-top:13px; padding-top:12px; border-top:1px solid var(--color-divider)">
+              <div style="display:flex; align-items:center; justify-content:space-between; gap:11px">
+                <div>
+                  <div style="font-size:12.5px">Backup verification</div>
+                  <div style="font-size:11px; color:var(--color-neutral-500)">Reads a sampled ciphertext set and confirms it still unwraps.</div>
+                </div>
+                <button class="btn btn-primary" style="font-size:11.5px; flex:0 0 auto" onClick="{{ runBackup }}">{{ backup.btnLabel }}</button>
+              </div>
+              <div style="{{ backup.style }}">{{ backup.result }}</div>
+            </div>
+          </section>
+
+          <section style="grid-column:span 2; border:1px solid var(--color-divider); border-radius:var(--radius-md); padding:15px">
+            <div style="display:flex; align-items:baseline; gap:11px">
+              <h2 style="font-size:15px; margin:0">Threat model</h2>
+              <span style="font-size:11.5px; color:var(--color-neutral-500)">False confidence is more dangerous than no encryption. Read both columns before you promise anything.</span>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0; margin-top:13px; border:1px solid var(--color-divider); border-radius:var(--radius-sm); overflow:hidden">
+              <div style="padding:13px; border-right:1px solid var(--color-divider); background:color-mix(in srgb, #5fd0a6 5%, transparent)">
+                <div style="display:flex; align-items:center; gap:7px; font-size:12px; color:#7fd9b6; text-transform:uppercase; letter-spacing:.09em">
+                  <span style="width:7px; height:7px; border-radius:50%; background:#5fd0a6"></span>
+                  <span>Protects against</span>
+                </div>
+                <ul style="margin:10px 0 0; padding-left:16px; display:flex; flex-direction:column; gap:6px; font-size:12.5px; color:var(--color-neutral-200)">
+                  <sc-for list="{{ protects }}" as="p" hint-placeholder-count="4"><li>{{ p }}</li></sc-for>
+                </ul>
+              </div>
+              <div style="padding:13px; background:color-mix(in srgb, #d9615c 6%, transparent)">
+                <div style="display:flex; align-items:center; gap:7px; font-size:12px; color:#e0817c; text-transform:uppercase; letter-spacing:.09em">
+                  <span style="width:7px; height:7px; border-radius:50%; background:#d9615c"></span>
+                  <span>Does not protect against</span>
+                </div>
+                <ul style="margin:10px 0 0; padding-left:16px; display:flex; flex-direction:column; gap:6px; font-size:12.5px; color:var(--color-neutral-200)">
+                  <sc-for list="{{ notProtects }}" as="p" hint-placeholder-count="4"><li>{{ p }}</li></sc-for>
+                </ul>
+              </div>
+            </div>
+          </section>
+        </div>
+      </sc-if>
+
+    </div>
+  </main>
+
+  <sc-if value="{{ rot }}" hint-placeholder-val="{{ false }}">
+    <div class="dialog-backdrop" style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:color-mix(in srgb, #0c0d15 72%, transparent); z-index:40">
+      <div class="dialog" style="width:470px; padding:18px; background:var(--color-surface); border:1px solid var(--color-divider); border-radius:var(--radius-md)">
+        <div style="font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:var(--color-neutral-500)">Rotate KEK</div>
+        <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:15px; margin-top:7px">{{ rot.keyId }}</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:11px; margin-top:14px">
+          <div style="border:1px solid var(--color-divider); border-radius:var(--radius-sm); padding:10px">
+            <div style="font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--color-neutral-500)">DEKs requiring rewrap</div>
+            <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:20px; margin-top:4px">{{ rot.deks }}</div>
+          </div>
+          <div style="border:1px solid var(--color-divider); border-radius:var(--radius-sm); padding:10px">
+            <div style="font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--color-neutral-500)">Estimated duration</div>
+            <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:20px; margin-top:4px">{{ rot.duration }}</div>
+          </div>
+        </div>
+        <div style="font-size:12px; color:var(--color-neutral-300); margin-top:12px; text-wrap:pretty">A new KEK becomes active immediately. The outgoing KEK moves to deprecated and stays readable until every DEK is re-wrapped. Reads and writes are unaffected.</div>
+        <div style="font-size:11.5px; color:#e0817c; margin-top:8px">{{ rot.error }}</div>
+        <div style="display:flex; gap:7px; justify-content:flex-end; margin-top:16px">
+          <button class="btn btn-ghost" style="font-size:12px" onClick="{{ closeRotate }}">Cancel</button>
+          <button class="btn btn-primary" style="font-size:12px" onClick="{{ confirmRotate }}">{{ rot.confirmLabel }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ df }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:color-mix(in srgb, #0c0d15 76%, transparent); z-index:50">
+      <div style="width:560px; max-height:86vh; overflow:auto; background:var(--color-surface); border:1px solid #6d3a38; border-radius:var(--radius-md); padding:18px">
+        <div style="display:flex; justify-content:space-between; align-items:baseline">
+          <div style="font-size:11px; text-transform:uppercase; letter-spacing:.09em; color:#e0817c">{{ df.title }}</div>
+          <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:11px; color:var(--color-neutral-500)">{{ df.stepLabel }}</div>
+        </div>
+        <div style="display:flex; gap:5px; margin-top:11px">
+          <sc-for list="{{ df.steps }}" as="s" hint-placeholder-count="3">
+            <div style="{{ s.style }}"></div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ df.s1 }}" hint-placeholder-val="{{ true }}">
+          <div>
+            <div style="font-size:14px; margin-top:15px">Blast radius</div>
+            <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:30px; color:#e0817c; margin-top:9px">{{ df.records }}</div>
+            <div style="font-size:12.5px; color:var(--color-neutral-300)">records become permanently unrecoverable. This cannot be reversed by restoring a backup — the backups are encrypted with the same key.</div>
+            <div style="margin-top:13px; border:1px solid var(--color-divider); border-radius:var(--radius-sm); padding:11px">
+              <div style="font-size:10px; text-transform:uppercase; letter-spacing:.08em; color:var(--color-neutral-500); margin-bottom:8px">Affected subgraph</div>
+              <svg viewBox="0 0 480 120" width="100%" height="120">
+                <sc-for list="{{ df.subEdges }}" as="e" hint-placeholder-count="6">
+                  <path d="{{ e.d }}" fill="none" stroke="{{ e.stroke }}" stroke-width="1"></path>
+                </sc-for>
+                <sc-for list="{{ df.subNodes }}" as="n" hint-placeholder-count="7">
+                  <g>
+                    <circle cx="{{ n.x }}" cy="{{ n.y }}" r="{{ n.r }}" fill="{{ n.fill }}" stroke="{{ n.stroke }}"></circle>
+                    <text x="{{ n.x }}" y="{{ n.ty }}" fill="{{ n.textFill }}" font-size="8.5" text-anchor="middle" font-family="JetBrains Mono, monospace">{{ n.label }}</text>
+                  </g>
+                </sc-for>
+              </svg>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:5px; margin-top:12px">
+              <sc-for list="{{ df.lines }}" as="l" hint-placeholder-count="3">
+                <div style="display:flex; justify-content:space-between; font-size:12px; border-bottom:1px solid var(--color-divider); padding-bottom:4px">
+                  <span style="color:var(--color-neutral-400)">{{ l.k }}</span>
+                  <span style="font-family:'JetBrains Mono',ui-monospace,monospace">{{ l.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ df.s2 }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="font-size:14px; margin-top:15px">Type the id by hand to confirm</div>
+            <div style="font-size:12.5px; color:var(--color-neutral-400); margin-top:5px">Paste is disabled. This step exists so that a destroy is never something you did by reflex.</div>
+            <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:15px; margin-top:12px; padding:8px 10px; border:1px dashed var(--color-neutral-700); border-radius:var(--radius-sm); user-select:none; color:var(--color-neutral-300)">{{ df.targetId }}</div>
+            <input class="input" style="width:100%; margin-top:9px; font-family:'JetBrains Mono',ui-monospace,monospace; font-size:14px" placeholder="Type the id exactly" value="{{ df.typed }}" onChange="{{ df.setTyped }}" onPaste="{{ df.blockPaste }}" onDrop="{{ df.blockPaste }}" autoComplete="off" spellCheck="{{ false }}">
+            <div style="display:flex; align-items:center; gap:7px; margin-top:8px; font-size:11.5px">
+              <span style="{{ df.matchDot }}"></span>
+              <span style="color:{{ df.matchColor }}">{{ df.matchLabel }}</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ df.s3 }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="font-size:14px; margin-top:15px">Second-party approval required</div>
+            <div style="font-size:12.5px; color:var(--color-neutral-400); margin-top:5px">The request is queued. It executes only once a second operator with destroy authority approves it.</div>
+            <div style="margin-top:13px; border:1px solid var(--color-divider); border-radius:var(--radius-sm)">
+              <sc-for list="{{ df.approvers }}" as="a" hint-placeholder-count="2">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 11px; border-bottom:1px solid var(--color-divider)">
+                  <div>
+                    <div style="font-size:12.5px">{{ a.name }}</div>
+                    <div style="font-size:11px; color:var(--color-neutral-500)">{{ a.role }}</div>
+                  </div>
+                  <span style="display:inline-flex; align-items:center; gap:7px; font-size:11.5px">
+                    <span style="{{ a.dot }}"></span>
+                    <span style="color:{{ a.color }}">{{ a.status }}</span>
+                  </span>
+                </div>
+              </sc-for>
+            </div>
+            <label style="display:flex; align-items:center; gap:9px; margin-top:12px; font-size:12px; color:var(--color-neutral-300); cursor:pointer">
+              <input type="checkbox" checked="{{ df.approved }}" onChange="{{ df.toggleApproval }}">
+              <span>Mock mode — simulate approval from S. Okonkwo</span>
+            </label>
+            <div style="font-size:11.5px; color:#e0817c; margin-top:9px">{{ df.error }}</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ df.done }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="font-size:14px; margin-top:15px; color:#7fd9b6">{{ df.doneTitle }}</div>
+            <div style="font-family:'JetBrains Mono',ui-monospace,monospace; font-size:30px; margin-top:9px">{{ df.records }}</div>
+            <div style="font-size:12.5px; color:var(--color-neutral-300)">{{ df.doneBody }}</div>
+            <div style="display:flex; flex-direction:column; gap:5px; margin-top:12px">
+              <sc-for list="{{ df.receipt }}" as="l" hint-placeholder-count="3">
+                <div style="display:flex; justify-content:space-between; font-size:12px; border-bottom:1px solid var(--color-divider); padding-bottom:4px">
+                  <span style="color:var(--color-neutral-400)">{{ l.k }}</span>
+                  <span style="font-family:'JetBrains Mono',ui-monospace,monospace; word-break:break-all; text-align:right">{{ l.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <div style="display:flex; gap:7px; justify-content:flex-end; margin-top:17px">
+          <button class="btn btn-ghost" style="font-size:12px" onClick="{{ df.cancel }}">{{ df.cancelLabel }}</button>
+          <button class="btn btn-primary" style="{{ df.nextStyle }}" disabled="{{ df.nextDisabled }}" onClick="{{ df.next }}">{{ df.nextLabel }}</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ locked }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; inset:0; z-index:60; background:color-mix(in srgb, #0c0d15 92%, transparent); display:flex; align-items:center; justify-content:center">
+      <div style="width:380px; border:1px solid var(--color-divider); border-radius:var(--radius-md); padding:20px; background:var(--color-surface); text-align:left">
+        <div style="font-size:11px; text-transform:uppercase; letter-spacing:.11em; color:var(--color-neutral-500)">Session locked</div>
+        <div style="font-size:15px; margin-top:8px">Idle for 15 minutes. The key provider connection was closed.</div>
+        <div style="font-size:12px; color:var(--color-neutral-400); margin-top:6px">No key material was held in this session. Reopening the provider re-establishes the connection only.</div>
+        <button class="btn btn-primary" style="width:100%; margin-top:15px; font-size:12px" onClick="{{ unlock }}">Reopen key provider</button>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="{{ toast.style }}">
+      <span style="{{ toast.dot }}"></span>
+      <span>{{ toast.text }}</span>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;kekAgeDays&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:62,&quot;tsType&quot;:&quot;number&quot;,&quot;min&quot;:0,&quot;max&quot;:120,&quot;unit&quot;:&quot;days&quot;,&quot;section&quot;:&quot;Simulation&quot;},&quot;rewrapSpeed&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;tsType&quot;:&quot;number&quot;,&quot;min&quot;:0.25,&quot;max&quot;:4,&quot;step&quot;:0.25,&quot;unit&quot;:&quot;×&quot;,&quot;section&quot;:&quot;Simulation&quot;},&quot;simulateFailures&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Simulation&quot;}}">
+const C = {
+  active: '#5fd0a6', deprecated: '#9397ab', revoked: '#d9a34a', destroyed: '#d9615c',
+  pending: '#b5abfc', accent: '#9184d9', dim: '#595d6c'
+};
+const STATE_LABEL = { pending: 'Pending', active: 'Active', deprecated: 'Deprecated', revoked: 'Revoked', destroyed: 'Destroyed' };
+const MONO = "'JetBrains Mono',ui-monospace,monospace";
+const NEXT = { pending: ['active', 'revoked'], active: ['deprecated', 'revoked', 'destroyed'], deprecated: ['revoked', 'destroyed'], revoked: [], destroyed: [] };
+const fmt = n => n.toLocaleString('en-US');
+const pad = n => String(n).padStart(2, '0');
+
+function rng(seed) { let s = seed; return () => { s = (s * 1664525 + 1013904223) % 4294967296; return s / 4294967296; }; }
+const hex = (r, n) => Array.from({ length: n }, () => '0123456789abcdef'[Math.floor(r() * 16)]).join('');
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const d = this.seed();
+    this.d = d;
+    this.state = {
+      route: (location.hash || '#/').replace('#', '') || '/',
+      hover: null, sel: null, zoom: 1, panX: 0, panY: 0,
+      keySearch: '', keyStates: [], keyTypes: [], sortBy: 'deps', sortDir: 'desc',
+      rewrapDone: 4120, paused: false, failuresOpen: false, retried: {},
+      subjQuery: '', subject: null, subjError: '', subjBusy: false, isolated: null, certificate: null,
+      auditActor: 'all', auditOp: 'all', auditRange: '24h', auditKey: '',
+      chainState: 'idle', chainDetail: '',
+      provider: 'vault', rotInterval: '90', alertThreshold: '25',
+      backupState: 'idle', backupResult: '',
+      rot: null, df: null, locked: false, idle: 900, toast: null,
+      keys: d.keys, audit: d.audit, ackSpike: false, revealed: {}
+    };
+  }
+
+  seed() {
+    const r = rng(20260823);
+    const keks = [
+      { id: 'kek-2f8a91c4', type: 'KEK', state: 'active', algorithm: 'AES-256-GCM', created: 62, rotated: 62, deps: 0 },
+      { id: 'kek-9b41de07', type: 'KEK', state: 'deprecated', algorithm: 'AES-256-GCM', created: 154, rotated: 92, deps: 0 },
+      { id: 'kek-1c07aa53', type: 'KEK', state: 'revoked', algorithm: 'AES-256-GCM', created: 301, rotated: 240, deps: 0 }
+    ];
+    const tables = ['accounts', 'orders', 'messages', 'support_tickets', 'device_sessions'];
+    const subjects = [];
+    for (let i = 0; i < 40; i++) {
+      const state = i === 0 ? 'active' : i < 34 ? 'active' : i < 36 ? 'deprecated' : i < 38 ? 'pending' : 'destroyed';
+      subjects.push({
+        id: i === 0 ? 'sk-demo-4417' : 'sk-' + hex(r, 8),
+        subjectId: i === 0 ? 'SUBJ-DEMO-4417' : 'SUBJ-' + Math.floor(1000 + r() * 8999),
+        type: 'Subject', state, algorithm: 'AES-256-GCM (wrapped)',
+        created: Math.floor(20 + r() * 300), rotated: Math.floor(2 + r() * 60),
+        deps: state === 'destroyed' ? 0 : Math.floor(180 + r() * 620),
+        kek: i < 30 ? 0 : 1
+      });
+    }
+    subjects[0].deps = 1284;
+    subjects[0].tables = [
+      { name: 'accounts', records: 1, wrapped: 'sk-demo-4417', masked: '••••••••••••' },
+      { name: 'orders', records: 214, wrapped: 'sk-demo-4417', masked: '••••••••••••' },
+      { name: 'messages', records: 892, wrapped: 'sk-demo-4417', masked: '••••••••••••' },
+      { name: 'support_tickets', records: 41, wrapped: 'sk-demo-4417', masked: '••••••••••••' },
+      { name: 'device_sessions', records: 136, wrapped: 'sk-demo-4417', masked: '••••••••••••' }
+    ];
+    keks[0].deps = subjects.filter(s => s.kek === 0 && s.state !== 'destroyed').reduce((a, s) => a + s.deps, 0);
+    keks[1].deps = subjects.filter(s => s.kek === 1 && s.state !== 'destroyed').reduce((a, s) => a + s.deps, 0);
+    const keys = keks.concat(subjects);
+    const totalItems = keys.filter(k => k.type === 'Subject').reduce((a, k) => a + k.deps, 0);
+
+    const spark = [4, 2, 3, 1, 2, 5, 3, 2, 4, 6, 3, 2, 5, 4, 3, 7, 5, 4, 9, 214, 61, 18, 7, 5];
+
+    const actors = ['a.mensah', 'svc.rewrap', 's.okonkwo', 'l.ferreira', 'svc.api'];
+    const ops = ['key.rotate', 'key.destroy', 'chain.verify', 'rewrap.batch', 'decrypt.fail', 'metadata.reveal', 'backup.verify', 'provider.open'];
+    const audit = [];
+    for (let i = 0; i < 46; i++) {
+      const op = ops[Math.floor(r() * ops.length)];
+      const fail = op === 'decrypt.fail';
+      const k = keys[Math.floor(r() * keys.length)];
+      const mins = i * 17 + Math.floor(r() * 11);
+      audit.push({
+        min: mins, actor: actors[Math.floor(r() * actors.length)], op,
+        keyId: k.id, itemId: op === 'rewrap.batch' || fail ? 'itm-' + hex(r, 6) : '—',
+        result: fail ? 'denied' : r() > 0.94 ? 'error' : 'ok', hash: hex(r, 10)
+      });
+    }
+    audit.sort((a, b) => a.min - b.min);
+    return { keys, tables, totalItems, spark, audit, actors, ops };
+  }
+
+  componentDidMount() {
+    this.tick = setInterval(() => {
+      this.setState(s => {
+        const next = { idle: Math.max(0, s.idle - 1), locked: s.locked || s.idle <= 1 };
+        if (s.route === '/rewrap' && !s.paused && s.rewrapDone < this.rewrapTotal()) {
+          const step = Math.round(26 * (Number(this.props.rewrapSpeed ?? 1) || 1));
+          next.rewrapDone = Math.min(this.rewrapTotal(), s.rewrapDone + step);
+        }
+        return next;
+      });
+    }, 1000);
+    this.onHash = () => this.setState({ route: (location.hash || '#/').replace('#', '') || '/' });
+    window.addEventListener('hashchange', this.onHash);
+  }
+  componentWillUnmount() { clearInterval(this.tick); window.removeEventListener('hashchange', this.onHash); }
+
+  rewrapTotal() { return this.d.keys[1].deps + 8270; }
+
+  // mock service: 200-600ms latency, occasional loud failure
+  call(failRate) {
+    const rate = this.props.simulateFailures === false ? 0 : (failRate ?? 0.12);
+    return new Promise((res, rej) => setTimeout(
+      () => (Math.random() < rate ? rej(new Error('Provider rejected the request (upstream 503). Nothing was changed.')) : res(true)),
+      200 + Math.random() * 400
+    ));
+  }
+
+  log(op, keyId, itemId, result) {
+    const r = rng(Date.now() % 100000);
+    this.setState(s => ({ audit: [{ min: -1, actor: 'a.mensah', op, keyId, itemId: itemId || '—', result: result || 'ok', hash: hex(r, 10) }].concat(s.audit) }));
+  }
+  flash(text, kind) {
+    this.setState({ toast: { text, kind: kind || 'ok' } });
+    clearTimeout(this.toastT);
+    this.toastT = setTimeout(() => this.setState({ toast: null }), 3600);
+  }
+
+  ts(min) {
+    const t = new Date(Date.UTC(2026, 7, 23, 21, 40) - min * 60000);
+    return t.toISOString().slice(0, 16).replace('T', ' ') + 'Z';
+  }
+
+  dot(color, size) {
+    return 'width:' + (size || 7) + 'px;height:' + (size || 7) + 'px;border-radius:50%;background:' + color + ';flex:0 0 auto';
+  }
+
+  graph() {
+    const keks = this.state.keys.filter(k => k.type === 'KEK');
+    const subs = this.state.keys.filter(k => k.type === 'Subject');
+    const nodes = [{ id: 'root-secret', type: 'Root', state: 'active', x: 62, y: 320, r: 27, label: 'ROOT', sub: 'external', deps: this.d.totalItems, parent: null }];
+    keks.forEach((k, i) => nodes.push({ id: k.id, type: 'KEK', state: k.state, x: 250, y: 130 + i * 190, r: 24, label: 'KEK', sub: k.id.slice(4, 10), deps: k.deps, parent: 'root-secret', key: k }));
+    const shown = [subs[0]].concat(subs.slice(1, 12));
+    shown.forEach((s, i) => {
+      const kek = keks[s.kek];
+      nodes.push({ id: s.id, type: 'Subject', state: s.state, x: 520, y: 42 + i * 51, r: 17, label: 'SK', sub: s.id.slice(3, 9), deps: s.deps, parent: kek.id, key: s });
+      nodes.push({ id: s.id + '-items', type: 'Cluster', state: s.state === 'destroyed' ? 'destroyed' : 'active', x: 790, y: 42 + i * 51, r: 15, label: fmt(s.deps), sub: 'items', deps: s.deps, parent: s.id });
+    });
+    const rest = subs.slice(12);
+    const restDeps = rest.reduce((a, s) => a + s.deps, 0);
+    nodes.push({ id: 'agg-subjects', type: 'Aggregate', state: 'active', x: 520, y: 615, r: 21, label: '+' + rest.length, sub: 'subject keys', deps: restDeps, parent: keks[0].id });
+    nodes.push({ id: 'agg-items', type: 'Cluster', state: 'active', x: 790, y: 615, r: 18, label: fmt(restDeps), sub: 'items', deps: restDeps, parent: 'agg-subjects' });
+    const byId = {}; nodes.forEach(n => byId[n.id] = n);
+    const kids = {}; nodes.forEach(n => { if (n.parent) (kids[n.parent] = kids[n.parent] || []).push(n.id); });
+    return { nodes, byId, kids };
+  }
+
+  downstream(id, kids, acc) {
+    acc = acc || new Set([id]);
+    (kids[id] || []).forEach(c => { acc.add(c); this.downstream(c, kids, acc); });
+    return acc;
+  }
+
+  go(route) { location.hash = '#' + route; this.setState({ route, idle: 900 }); }
+
+  startDestroy(target) {
+    this.setState({
+      df: {
+        kind: target.kind, targetId: target.targetId, label: target.label,
+        records: target.records, keyId: target.keyId, tables: target.tables || null
+      },
+      dfStep: 1, dfTyped: '', dfApproved: false, dfError: '', dfBusy: false, dfResult: null
+    });
+  }
+
+  async execDestroy() {
+    const df = this.state.df;
+    this.setState({ dfBusy: true, dfError: '' });
+    try {
+      await this.call(0.1);
+      const cert = {
+        id: 'cert-' + hex(rng(Date.now() % 99991), 8),
+        issued: this.ts(0), records: df.records, subject: df.targetId,
+        signature: hex(rng((Date.now() + 7) % 99991), 32)
+      };
+      this.setState(s => ({
+        keys: s.keys.map(k => (k.id === df.keyId ? Object.assign({}, k, { state: 'destroyed', deps: 0 }) : k)),
+        dfStep: 4, dfBusy: false, dfResult: cert,
+        certificate: df.kind === 'erasure' ? cert : s.certificate,
+        subject: df.kind === 'erasure' && s.subject ? Object.assign({}, s.subject, { state: 'destroyed' }) : s.subject,
+        sel: null
+      }));
+      this.log(df.kind === 'erasure' ? 'subject.erase' : 'key.destroy', df.keyId, '—', 'ok');
+    } catch (e) {
+      this.setState({ dfBusy: false, dfError: e.message });
+      this.log(df.kind === 'erasure' ? 'subject.erase' : 'key.destroy', df.keyId, '—', 'error');
+    }
+  }
+
+  async searchSubject() {
+    const q = this.state.subjQuery.trim();
+    this.setState({ subjBusy: true, subjError: '', subject: null, certificate: null, isolated: null });
+    try {
+      await this.call(0.08);
+      const k = this.state.keys.find(x => x.type === 'Subject' && (x.subjectId || '').toLowerCase() === q.toLowerCase());
+      if (!k) throw new Error('No subject key exists for "' + q + '". Nothing was returned — no partial match, no default.');
+      this.setState({ subject: k, subjBusy: false });
+      this.log('subject.lookup', k.id, '—', 'ok');
+    } catch (e) { this.setState({ subjBusy: false, subjError: e.message }); }
+  }
+
+  async verifyChain() {
+    this.setState({ chainState: 'busy', chainDetail: '' });
+    try {
+      await this.call(0.25);
+      this.setState({ chainState: 'ok', chainDetail: '' });
+      this.log('chain.verify', '—', '—', 'ok');
+    } catch (e) {
+      this.setState({ chainState: 'fail', chainDetail: 'Chain broken at entry 00418 (hash 4b1c9e77aa) — recorded 2026-08-21 03:14Z, actor svc.rewrap. Stored digest does not match the recomputed digest of its predecessor. Entries after 00418 cannot be trusted.' });
+      this.log('chain.verify', '—', '—', 'error');
+    }
+  }
+
+  async runBackup() {
+    this.setState({ backupState: 'busy', backupResult: '' });
+    try {
+      await this.call(0.2);
+      this.setState({ backupState: 'ok', backupResult: 'Verified 512 sampled ciphertexts across 3 snapshots. All unwrapped against their current KEK. Completed ' + this.ts(0) + '.' });
+      this.log('backup.verify', '—', '—', 'ok');
+    } catch (e) {
+      this.setState({ backupState: 'fail', backupResult: e.message + ' Backup verification did not complete — treat backup state as unknown.' });
+      this.log('backup.verify', '—', '—', 'error');
+    }
+  }
+
+  download(name, text) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([text], { type: 'text/plain' }));
+    a.download = name; a.click(); URL.revokeObjectURL(a.href);
+  }
+
+  auditFiltered() {
+    const s = this.state;
+    const win = s.auditRange === '1h' ? 60 : s.auditRange === '24h' ? 1440 : 10080;
+    return s.audit.filter(a =>
+      (s.auditActor === 'all' || a.actor === s.auditActor) &&
+      (s.auditOp === 'all' || a.op === s.auditOp) &&
+      (a.min < 0 || a.min <= win) &&
+      (!s.auditKey || a.keyId.toLowerCase().includes(s.auditKey.toLowerCase()))
+    );
+  }
+
+  renderVals() {
+    const s = this.state, self = this;
+    const keys = s.keys;
+    const activeKek = keys.find(k => k.type === 'KEK' && k.state === 'active') || keys[0];
+    const kekAge = Number(this.props.kekAgeDays ?? 62);
+    const subjects = keys.filter(k => k.type === 'Subject');
+    const totalItems = subjects.reduce((a, k) => a + k.deps, 0);
+    const g = this.graph();
+    const lit = s.hover ? this.downstream(s.hover, g.kids) : null;
+
+    const routes = [
+      ['/', 'Dashboard', ''], ['/map', 'Key map', String(g.nodes.length)], ['/keys', 'Keys', String(keys.length)],
+      ['/rewrap', 'Rewrap monitor', 'live'], ['/privacy', 'Privacy center', ''], ['/audit', 'Audit log', String(s.audit.length)], ['/settings', 'Settings', '']
+    ];
+    const titles = { '/': 'Operations overview', '/map': 'Key map', '/keys': 'Keys', '/rewrap': 'Rewrap monitor', '/privacy': 'Privacy center', '/audit': 'Audit log', '/settings': 'Settings' };
+
+    const nav = routes.map(([route, label, badge]) => {
+      const on = s.route === route;
+      return {
+        label, badge, go: () => self.go(route),
+        style: 'display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;padding:6px 8px;border:1px solid ' + (on ? 'var(--color-accent-700)' : 'transparent') + ';border-radius:var(--radius-sm);background:' + (on ? 'color-mix(in srgb, var(--color-accent) 13%, transparent)' : 'transparent') + ';color:' + (on ? 'var(--color-text)' : 'var(--color-neutral-400)') + ';font:inherit;font-size:12.5px;cursor:pointer;text-align:left',
+        markStyle: 'width:3px;height:13px;border-radius:2px;background:' + (on ? 'var(--color-accent)' : 'var(--color-neutral-800)')
+      };
+    });
+
+    const kekPct = Math.min(100, (kekAge / 90) * 100);
+    const kekColor = kekAge > 90 ? C.destroyed : kekAge > 75 ? C.revoked : C.active;
+    const kekFlag = kekAge > 90 ? 'Overdue — rotation deadline passed ' + (kekAge - 90) + ' days ago' : kekAge > 75 ? 'Rotation due in ' + (90 - kekAge) + ' days' : 'Within rotation window';
+
+    const spikePeak = Math.max.apply(null, this.d.spark);
+    const base = Math.round(this.d.spark.slice(0, 18).reduce((a, b) => a + b, 0) / 18);
+    const spark = this.d.spark.map((v, i) => {
+      const big = v > Number(s.alertThreshold || 25);
+      return {
+        hour: pad(i) + '', title: pad(i) + ':00 — ' + v + ' failed attempts', labelColor: big ? C.destroyed : 'var(--color-neutral-700)',
+        style: 'height:' + Math.max(2, (v / spikePeak) * 100) + '%;border-radius:2px 2px 0 0;background:' + (big ? C.destroyed : 'var(--color-accent-700)') + (big ? ';box-shadow:0 0 12px color-mix(in srgb,#d9615c 55%,transparent)' : '')
+      };
+    });
+
+    const kekAwaiting = keys.filter(k => k.type === 'KEK' && k.state === 'deprecated').length;
+    const tiles = [
+      { label: 'Encrypted items', value: fmt(totalItems), note: 'wrapped by ' + subjects.filter(k => k.state !== 'destroyed').length + ' live subject keys', color: 'var(--color-text)' },
+      { label: 'Active subject keys', value: fmt(subjects.filter(k => k.state === 'active').length), note: 'one per data subject', color: C.active },
+      { label: 'Destroyed subject keys', value: fmt(subjects.filter(k => k.state === 'destroyed').length), note: 'terminal — unrecoverable', color: C.destroyed },
+      { label: 'Deprecated KEKs awaiting rewrap', value: String(kekAwaiting), note: fmt(this.rewrapTotal() - s.rewrapDone) + ' DEKs outstanding', color: C.revoked }
+    ];
+
+    const health = [
+      { label: 'Key provider', value: 'Connected · ' + (s.provider === 'vault' ? 'Vault (transit)' : s.provider), color: C.active, dot: this.dot(C.active) },
+      { label: 'Backup last verified', value: s.backupState === 'ok' ? 'Today' : '3 days ago', color: s.backupState === 'ok' ? C.active : C.revoked, dot: this.dot(s.backupState === 'ok' ? C.active : C.revoked) },
+      { label: 'Audit chain integrity', value: s.chainState === 'fail' ? 'Broken at entry 00418' : s.chainState === 'ok' ? 'Verified · 46 entries' : 'Not verified this session', color: s.chainState === 'fail' ? C.destroyed : s.chainState === 'ok' ? C.active : C.deprecated, dot: this.dot(s.chainState === 'fail' ? C.destroyed : s.chainState === 'ok' ? C.active : C.deprecated) },
+      { label: 'Rewrap job', value: s.paused ? 'Paused at ' + fmt(s.rewrapDone) : 'Running · ' + fmt(s.rewrapDone) + ' of ' + fmt(this.rewrapTotal()), color: s.paused ? C.revoked : C.active, dot: this.dot(s.paused ? C.revoked : C.active) }
+    ];
+
+    // ---- graph view ----
+    const nodeFill = st => ({ active: C.active, deprecated: C.deprecated, revoked: C.revoked, destroyed: C.destroyed, pending: C.pending }[st] || C.deprecated);
+    const nodes = g.nodes.map(n => {
+      const on = !lit || lit.has(n.id);
+      const col = nodeFill(n.state);
+      const isSel = s.sel === n.id;
+      return {
+        label: n.label, sub: n.sub, title: n.id + ' · ' + STATE_LABEL[n.state] + ' · ' + fmt(n.deps) + ' dependent records',
+        select: () => self.setState({ sel: n.id, idle: 900 }),
+        hover: () => self.setState({ hover: n.id }),
+        style: 'position:absolute;left:' + (n.x - n.r) + 'px;top:' + (n.y - n.r) + 'px;width:' + n.r * 2 + 'px;height:' + n.r * 2 + 'px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;cursor:pointer;font:inherit;font-size:10px;color:' + (on ? col : C.dim) + ';border:1px solid ' + (on ? col : 'var(--color-neutral-800)') + ';background:' + (on ? 'color-mix(in srgb,' + col + ' 14%, #161826)' : '#191b28') + ';opacity:' + (on ? 1 : 0.32) + ';box-shadow:' + (isSel ? '0 0 0 2px ' + col + '55, 0 0 18px ' + col + '55' : on && lit ? '0 0 14px ' + col + '44' : 'none') + ';transition:opacity .15s',
+        labelStyle: 'font-family:' + MONO + ';font-size:10.5px;' + (n.state === 'destroyed' ? 'text-decoration:line-through' : '')
+      };
+    });
+    const edges = g.nodes.filter(n => n.parent).map(n => {
+      const p = g.byId[n.parent];
+      const on = !lit || (lit.has(n.id) && lit.has(n.parent)) || lit.has(n.parent);
+      const mx = (p.x + n.x) / 2;
+      return {
+        d: 'M' + (p.x + p.r) + ',' + p.y + ' C' + mx + ',' + p.y + ' ' + mx + ',' + n.y + ' ' + (n.x - n.r) + ',' + n.y,
+        stroke: on && lit ? nodeFill(n.state) : on ? '#343747' : '#23252f',
+        w: on && lit ? 1.6 : 1, dash: n.state === 'destroyed' ? '3 3' : '0'
+      };
+    });
+    const hoverNode = s.hover ? g.byId[s.hover] : null;
+    const hoverCard = hoverNode ? {
+      id: hoverNode.id + (hoverNode.type === 'Cluster' ? ' · item cluster' : ''),
+      warning: 'Destroying this node permanently loses ' + fmt(hoverNode.deps) + ' records.',
+      downstream: (lit.size - 1) + ' downstream dependents illuminated · ' + STATE_LABEL[hoverNode.state],
+      style: 'position:absolute;left:' + Math.min(hoverNode.x * s.zoom + s.panX + 34, 620) + 'px;top:' + (hoverNode.y * s.zoom + s.panY - 10) + 'px;max-width:290px;padding:9px 11px;border:1px solid #6d3a38;border-radius:var(--radius-sm);background:color-mix(in srgb,#1b1d2b 94%,transparent);pointer-events:none;z-index:5'
+    } : null;
+    const selNode = s.sel ? g.byId[s.sel] : null;
+    let sel = null;
+    if (selNode) {
+      const k = selNode.key;
+      const legal = k ? NEXT[selNode.state] : [];
+      const actions = [];
+      if (k && legal.includes('deprecated') && k.type === 'KEK') actions.push({ label: 'Rotate KEK', cls: 'btn btn-primary', style: 'font-size:12px;width:100%', run: () => self.setState({ rot: { keyId: k.id, deks: fmt(k.deps), duration: Math.max(3, Math.round(k.deps / 900)) + ' min', error: '', busy: false } }) });
+      if (k && legal.includes('revoked')) actions.push({ label: 'Revoke', cls: 'btn btn-secondary', style: 'font-size:12px;width:100%', run: () => { self.setState(st => ({ keys: st.keys.map(x => x.id === k.id ? Object.assign({}, x, { state: 'revoked' }) : x) })); self.log('key.revoke', k.id, '—', 'ok'); self.flash('Revoked ' + k.id + '. Reads through this key now fail.'); } });
+      if (k && legal.includes('destroyed')) actions.push({ label: 'Destroy key', cls: 'btn btn-primary', style: 'font-size:12px;width:100%;color:#e0817c;border-color:#8c4844', run: () => self.startDestroy({ kind: 'key', targetId: k.id, label: k.type + ' ' + k.id, records: k.deps, keyId: k.id }) });
+      sel = {
+        id: selNode.id, typeLabel: selNode.type === 'Root' ? 'Root secret' : selNode.type === 'Cluster' ? 'Item cluster (aggregate)' : selNode.type === 'Aggregate' ? 'Subject key group' : selNode.type + ' key',
+        stateLabel: STATE_LABEL[selNode.state], dot: this.dot(nodeFill(selNode.state), 8),
+        idDecor: selNode.state === 'destroyed' ? 'text-decoration:line-through;color:' + C.destroyed : '',
+        blast: fmt(selNode.deps) + ' records become permanently unreadable',
+        clearSel: () => self.setState({ sel: null }),
+        meta: [
+          { k: 'Type', v: selNode.type }, { k: 'Algorithm', v: k ? k.algorithm : 'held externally' },
+          { k: 'Created', v: k ? this.ts(k.created * 1440).slice(0, 10) : '—' },
+          { k: 'Last rotated', v: k ? k.rotated + 'd ago' : 'n/a' },
+          { k: 'Dependents', v: fmt(selNode.deps) }, { k: 'Parent', v: selNode.parent || 'none' }
+        ],
+        actions,
+        actionNote: actions.length ? 'Only transitions legal from ' + STATE_LABEL[selNode.state].toLowerCase() + ' are offered.' : selNode.state === 'destroyed' ? 'Destroyed is terminal. No actions exist.' : 'Aggregate nodes carry no direct actions — act on the keys beneath them.'
+      };
+    }
+    const legend = ['active', 'deprecated', 'revoked', 'destroyed'].map(st => ({
+      label: STATE_LABEL[st] + (st === 'destroyed' ? ' (terminal)' : ''), dot: this.dot(nodeFill(st)),
+      textStyle: 'color:var(--color-neutral-300);' + (st === 'destroyed' ? 'text-decoration:line-through' : '')
+    }));
+
+    // ---- keys table ----
+    const chipDefs = [['state', 'active'], ['state', 'deprecated'], ['state', 'pending'], ['state', 'revoked'], ['state', 'destroyed'], ['type', 'KEK'], ['type', 'Subject']];
+    const keyChips = chipDefs.map(([kind, v]) => {
+      const arr = kind === 'state' ? s.keyStates : s.keyTypes;
+      const on = arr.includes(v);
+      return {
+        label: kind === 'state' ? STATE_LABEL[v] : v, toggle: () => self.setState(st => {
+          const key = kind === 'state' ? 'keyStates' : 'keyTypes';
+          const cur = st[key];
+          return { [key]: cur.includes(v) ? cur.filter(x => x !== v) : cur.concat(v) };
+        }),
+        style: 'padding:3px 9px;border-radius:999px;border:1px solid ' + (on ? 'var(--color-accent)' : 'var(--color-divider)') + ';background:' + (on ? 'color-mix(in srgb, var(--color-accent) 15%, transparent)' : 'transparent') + ';color:' + (on ? 'var(--color-accent-200)' : 'var(--color-neutral-400)') + ';font:inherit;font-size:11.5px;cursor:pointer'
+      };
+    });
+    let rows = keys.filter(k =>
+      (!s.keyStates.length || s.keyStates.includes(k.state)) &&
+      (!s.keyTypes.length || s.keyTypes.includes(k.type)) &&
+      (!s.keySearch || k.id.toLowerCase().includes(s.keySearch.toLowerCase()))
+    );
+    const dir = s.sortDir === 'asc' ? 1 : -1;
+    rows = rows.slice().sort((a, b) => {
+      const f = s.sortBy;
+      const av = f === 'deps' ? a.deps : f === 'created' ? a.created : f === 'rotated' ? a.rotated : String(a[f] || '');
+      const bv = f === 'deps' ? b.deps : f === 'created' ? b.created : f === 'rotated' ? b.rotated : String(b[f] || '');
+      return av > bv ? dir : av < bv ? -dir : 0;
+    });
+    const keyCols = [['id', 'Key id'], ['type', 'Type'], ['state', 'State'], ['created', 'Created'], ['deps', 'Dependent items'], ['rotated', 'Last rotated']].map(([f, label]) => ({
+      label: label + (s.sortBy === f ? (s.sortDir === 'asc' ? '  ↑' : '  ↓') : ''),
+      style: 'white-space:nowrap;' + (f === 'deps' ? 'text-align:right' : ''),
+      sort: () => self.setState(st => ({ sortBy: f, sortDir: st.sortBy === f && st.sortDir === 'desc' ? 'asc' : 'desc' }))
+    }));
+    const keyRows = rows.slice(0, 60).map(k => {
+      const legal = NEXT[k.state];
+      const actions = [];
+      if (k.type === 'KEK' && legal.includes('deprecated')) actions.push({ label: 'Rotate', cls: 'btn btn-secondary', style: 'font-size:11px;padding:2px 8px', run: () => self.setState({ rot: { keyId: k.id, deks: fmt(k.deps), duration: Math.max(3, Math.round(k.deps / 900)) + ' min', error: '', busy: false } }) });
+      if (legal.includes('destroyed')) actions.push({ label: 'Destroy', cls: 'btn btn-secondary', style: 'font-size:11px;padding:2px 8px;color:#e0817c;border-color:#6d3a38', run: () => self.startDestroy({ kind: 'key', targetId: k.id, label: k.type + ' ' + k.id, records: k.deps, keyId: k.id }) });
+      if (k.type === 'Subject' && k.state !== 'destroyed') actions.push({ label: 'Inspect', cls: 'btn btn-ghost', style: 'font-size:11px;padding:2px 8px', run: () => { self.setState({ sel: k.id }); self.go('/map'); } });
+      return {
+        id: k.id, type: k.type, stateLabel: STATE_LABEL[k.state], dot: this.dot(nodeFill(k.state), 6),
+        created: this.ts(k.created * 1440).slice(0, 10), deps: fmt(k.deps), rotated: k.rotated + 'd ago',
+        rowStyle: k.state === 'destroyed' ? 'opacity:.6' : '',
+        idStyle: 'font-family:' + MONO + ';' + (k.state === 'destroyed' ? 'text-decoration:line-through;color:' + C.destroyed : ''),
+        actions, noActions: actions.length ? '' : 'no actions'
+      };
+    });
+
+    // ---- rewrap ----
+    const total = this.rewrapTotal();
+    const pct = Math.round((s.rewrapDone / total) * 100);
+    const failures = [
+      { item: 'itm-9a41c7', subject: 'sk-4c19ab02', reason: 'DEK header version mismatch', attempts: 3 },
+      { item: 'itm-2b7d04', subject: 'sk-77e1c930', reason: 'Object missing from blob store', attempts: 2 },
+      { item: 'itm-c40f11', subject: 'sk-1ba55e6c', reason: 'Row locked by long transaction', attempts: 5 },
+      { item: 'itm-77bd93', subject: 'sk-4c19ab02', reason: 'DEK header version mismatch', attempts: 1 }
+    ].map(f => Object.assign({}, f, {
+      retryLabel: s.retried[f.item] ? 'Queued' : 'Retry',
+      retry: () => { self.setState(st => ({ retried: Object.assign({}, st.retried, { [f.item]: true }) })); self.log('rewrap.retry', 'kek-2f8a91c4', f.item, 'ok'); }
+    }));
+    const rewrap = {
+      jobId: 'job-rw-0f3c81 · kek-9b41de07 → kek-2f8a91c4',
+      countLabel: fmt(s.rewrapDone) + ' of ' + fmt(total) + ' re-wrapped',
+      rate: s.paused ? 'paused' : '~26 items/sec', pct: String(pct),
+      from: 'kek-9b41de07', to: 'kek-2f8a91c4',
+      eta: s.paused ? '—' : Math.max(1, Math.round((total - s.rewrapDone) / 26 / 60)) + ' min',
+      barStyle: 'height:100%;width:' + pct + '%;background:linear-gradient(90deg,var(--color-accent-600),var(--color-accent));background-size:40px 100%;animation:krScan 1.4s linear infinite',
+      toggle: () => self.setState(st => ({ paused: !st.paused })), toggleLabel: s.paused ? 'Resume job' : 'Pause job',
+      showFailures: () => self.setState(st => ({ failuresOpen: !st.failuresOpen })),
+      failuresLabel: s.failuresOpen ? 'Hide failures (4)' : 'View failures (4)',
+      failuresOpen: s.failuresOpen, failures, failCount: '4',
+      stateDot: this.dot(s.paused ? C.revoked : C.active), stateLabel: s.paused ? 'Paused — reads and writes still fully available' : 'Running — reads and writes unaffected'
+    };
+
+    // ---- privacy ----
+    let subject = null;
+    if (s.subject) {
+      const k = keys.find(x => x.id === s.subject.id) || s.subject;
+      const tabs = (k.tables || [{ name: 'accounts', records: 1, wrapped: k.id, masked: '••••••••••••' }]).map(t => ({
+        name: t.name, records: fmt(t.records), wrapped: t.wrapped,
+        masked: s.revealed[t.name] ? 'sha256:' + hex(rng(t.name.length * 977), 12) : t.masked,
+        revealLabel: s.revealed[t.name] ? 'Hide' : 'Reveal',
+        reveal: () => {
+          const on = !s.revealed[t.name];
+          self.setState(st => ({ revealed: Object.assign({}, st.revealed, { [t.name]: on }), isolated: on ? { value: 'sha256:' + hex(rng(t.name.length * 977), 32), color: 'var(--color-accent-200)', note: 'Field digest for ' + t.name + '. Metadata only — never plaintext, never key material. Cleared when this panel closes; not written to any store.' } : st.isolated }));
+          if (on) self.log('metadata.reveal', k.id, t.name, 'ok');
+        }
+      }));
+      const records = k.state === 'destroyed' ? 0 : (k.tables ? k.tables.reduce((a, t) => a + t.records, 0) : k.deps);
+      subject = {
+        id: k.subjectId, dot: this.dot(nodeFill(k.state), 8), stateLabel: 'Subject key ' + STATE_LABEL[k.state].toLowerCase(),
+        meta: [{ k: 'Subject key', v: k.id }, { k: 'Records', v: fmt(records) }, { k: 'Last access', v: this.ts(214) }, { k: 'Wrapped by', v: 'kek-' + (k.kek === 0 ? '2f8a91c4' : '9b41de07') }],
+        tables: tabs, records: fmt(records), tableCount: String(tabs.length),
+        eraseLabel: k.state === 'destroyed' ? 'Already erased — key destroyed' : 'Execute right to erasure',
+        erase: () => { if (k.state !== 'destroyed') self.startDestroy({ kind: 'erasure', targetId: k.subjectId, label: 'subject ' + k.subjectId, records, keyId: k.id }); }
+      };
+    }
+    const certificate = s.certificate ? {
+      subject: s.certificate.subject,
+      headline: fmt(s.certificate.records) + ' records rendered permanently unreadable, including all backup and archive copies.',
+      rows: [
+        { k: 'Certificate id', v: s.certificate.id }, { k: 'Issued', v: s.certificate.issued },
+        { k: 'Method', v: 'crypto-shred (subject key destroyed)' }, { k: 'Records', v: fmt(s.certificate.records) },
+        { k: 'Signed by', v: 'keyring-console / a.mensah' }, { k: 'Signature', v: s.certificate.signature }
+      ],
+      export: () => self.download(s.certificate.id + '.txt', ['KEYRING DELETION CERTIFICATE', 'certificate: ' + s.certificate.id, 'subject: ' + s.certificate.subject, 'issued: ' + s.certificate.issued, 'records_unreadable: ' + s.certificate.records, 'method: crypto-shred (subject key destroyed)', 'signature: ' + s.certificate.signature].join('\n')),
+      print: () => window.print()
+    } : null;
+
+    // ---- audit ----
+    const auditRows = this.auditFiltered().slice(0, 40).map(a => ({
+      ts: a.min < 0 ? this.ts(0) : this.ts(a.min), actor: a.actor, op: a.op, keyId: a.keyId, itemId: a.itemId,
+      result: a.result === 'ok' ? 'ok' : a.result === 'denied' ? 'denied' : 'error',
+      color: a.result === 'ok' ? 'var(--color-neutral-200)' : a.result === 'denied' ? C.revoked : C.destroyed,
+      dot: this.dot(a.result === 'ok' ? C.active : a.result === 'denied' ? C.revoked : C.destroyed, 6),
+      hash: a.hash, rowStyle: a.min < 0 ? 'background:color-mix(in srgb, var(--color-accent) 7%, transparent)' : ''
+    }));
+    const chain = {
+      style: 'display:inline-flex;align-items:center;gap:6px;font-size:11.5px;padding:3px 9px;border-radius:999px;border:1px solid ' + (s.chainState === 'ok' ? C.active : s.chainState === 'fail' ? '#8c4844' : 'var(--color-divider)') + ';color:' + (s.chainState === 'ok' ? C.active : s.chainState === 'fail' ? '#e0817c' : 'var(--color-neutral-500)'),
+      label: s.chainState === 'ok' ? 'Chain verified' : s.chainState === 'fail' ? 'Chain broken' : s.chainState === 'busy' ? 'Verifying…' : 'Chain unverified',
+      btnLabel: s.chainState === 'busy' ? 'Verifying…' : 'Verify chain integrity',
+      detail: s.chainDetail,
+      detailStyle: 'font-size:12px;padding:10px 12px;border:1px solid #8c4844;border-radius:var(--radius-sm);background:color-mix(in srgb,#d9615c 9%,transparent);color:#f0c3c1;font-family:' + MONO
+    };
+
+    // ---- destructive flow ----
+    let df = null;
+    if (s.df) {
+      const step = s.dfStep;
+      const match = s.dfTyped === s.df.targetId;
+      const subN = [{ x: 40, y: 60, r: 11, l: 'KEK' }, { x: 150, y: 60, r: 13, l: 'SUBJ' }].concat(
+        [0, 1, 2, 3, 4].map(i => ({ x: 300 + (i % 3) * 70, y: 26 + Math.floor(i / 3) * 62, r: 9, l: (s.df.tables ? s.df.tables[i] && s.df.tables[i].name.slice(0, 6) : 'items') || 'items' }))
+      );
+      df = {
+        title: s.df.kind === 'erasure' ? 'Right to erasure · ' + s.df.targetId : 'Destroy key · ' + s.df.targetId,
+        stepLabel: step > 3 ? 'complete' : 'step ' + step + ' of 3',
+        steps: [1, 2, 3].map(i => ({ style: 'flex:1;height:2px;border-radius:2px;background:' + (i <= Math.min(step, 3) ? (step > 3 ? C.active : '#d9615c') : 'var(--color-neutral-800)') })),
+        s1: step === 1, s2: step === 2, s3: step === 3, done: step === 4,
+        records: fmt(s.df.records), targetId: s.df.targetId, typed: s.dfTyped,
+        setTyped: e => self.setState({ dfTyped: e.target.value }),
+        blockPaste: e => { e.preventDefault(); self.flash('Paste is disabled here. Type the id by hand.', 'warn'); },
+        matchDot: this.dot(match ? C.active : C.revoked, 6),
+        matchColor: match ? C.active : 'var(--color-neutral-500)',
+        matchLabel: match ? 'Exact match' : 'Does not match yet — the confirm button stays disabled',
+        lines: [
+          { k: 'Target', v: s.df.targetId }, { k: 'Key', v: s.df.keyId },
+          { k: 'Records lost', v: fmt(s.df.records) }, { k: 'Recoverable from backup', v: 'no' },
+          { k: 'Downstream DEKs', v: fmt(s.df.records) }
+        ],
+        subNodes: subN.map(n => ({ x: n.x, y: n.y, r: n.r, ty: n.y + 3, label: n.l, fill: 'color-mix(in srgb,#d9615c 18%,#161826)', stroke: '#d9615c', textFill: '#e8b0ad' })),
+        subEdges: [{ d: 'M51,60 L137,60', stroke: '#8c4844' }].concat(subN.slice(2).map(n => ({ d: 'M163,60 C230,60 230,' + n.y + ' ' + (n.x - n.r) + ',' + n.y, stroke: '#8c4844' }))),
+        approvers: [
+          { name: 'S. Okonkwo', role: 'Security lead · destroy authority', status: s.dfApproved ? 'Approved ' + this.ts(0) : 'Awaiting approval', color: s.dfApproved ? C.active : C.revoked, dot: this.dot(s.dfApproved ? C.active : C.revoked, 6) },
+          { name: 'a.mensah', role: 'Requester · this session', status: 'Requested', color: 'var(--color-neutral-400)', dot: this.dot(C.deprecated, 6) }
+        ],
+        approved: s.dfApproved, toggleApproval: () => self.setState(st => ({ dfApproved: !st.dfApproved })),
+        error: s.dfError,
+        doneTitle: s.df.kind === 'erasure' ? 'Erasure executed' : 'Key destroyed',
+        doneBody: s.df.kind === 'erasure' ? 'records rendered unreadable across ' + (s.df.tables ? s.df.tables.length : 5) + ' tables. A signed deletion certificate is on the privacy center screen.' : 'records are now permanently unreadable. The key state is destroyed and terminal.',
+        receipt: s.dfResult ? [{ k: 'Certificate', v: s.dfResult.id }, { k: 'Issued', v: s.dfResult.issued }, { k: 'Signature', v: s.dfResult.signature }] : [],
+        cancelLabel: step === 4 ? 'Close' : 'Cancel',
+        cancel: () => self.setState({ df: null }),
+        nextDisabled: (step === 2 && !match) || (step === 3 && (!s.dfApproved || s.dfBusy)),
+        nextLabel: s.dfBusy ? 'Executing…' : step === 1 ? 'I understand — continue' : step === 2 ? 'Confirm id' : step === 3 ? 'Execute destroy' : 'Done',
+        nextStyle: 'font-size:12px;' + (step === 3 ? 'color:#e0817c;border-color:#8c4844' : ''),
+        next: () => {
+          if (step === 4) { self.setState({ df: null }); return; }
+          if (step === 3) { self.execDestroy(); return; }
+          self.setState(st => ({ dfStep: st.dfStep + 1 }));
+        }
+      };
+    }
+
+    const rot = s.rot ? Object.assign({}, s.rot, {
+      confirmLabel: s.rot.busy ? 'Rotating…' : 'Rotate now'
+    }) : null;
+
+    const providerDefs = [
+      ['file', 'Key file on disk', 'Development only. Anyone with disk access has the root secret.', 'file://'],
+      ['env', 'Environment variable', 'Leaks through process listings and crash dumps.', 'ENV'],
+      ['vault', 'HashiCorp Vault (transit)', 'Unwrap happens in Vault. Key material never enters this process.', 'transit'],
+      ['kms', 'Cloud KMS', 'Hardware-backed. Audited unwrap calls, per-request IAM.', 'kms']
+    ];
+    const providers = providerDefs.map(([v, label, note, tag]) => {
+      const on = s.provider === v;
+      return {
+        label, note, tag, pick: () => { self.setState({ provider: v }); self.log('provider.open', '—', '—', 'ok'); self.flash('Provider set to ' + label + '. Connection reopened.'); },
+        style: 'display:flex;align-items:center;justify-content:space-between;gap:11px;width:100%;text-align:left;padding:9px 11px;border:1px solid ' + (on ? 'var(--color-accent)' : 'var(--color-divider)') + ';border-radius:var(--radius-sm);background:' + (on ? 'color-mix(in srgb, var(--color-accent) 10%, transparent)' : 'transparent') + ';color:inherit;font:inherit;cursor:pointer',
+        mark: 'width:9px;height:9px;border-radius:50%;flex:0 0 auto;border:1px solid ' + (on ? 'var(--color-accent)' : 'var(--color-neutral-700)') + ';background:' + (on ? 'var(--color-accent)' : 'transparent')
+      };
+    });
+
+    const toast = s.toast ? {
+      text: s.toast.text, dot: this.dot(s.toast.kind === 'warn' ? C.revoked : C.active, 7),
+      style: 'position:fixed;right:18px;bottom:18px;z-index:70;display:flex;align-items:center;gap:9px;padding:10px 13px;border:1px solid var(--color-divider);border-radius:var(--radius-sm);background:var(--color-surface);font-size:12.5px;box-shadow:var(--shadow-md)'
+    } : null;
+
+    return {
+      nav, title: titles[s.route] || 'Keyring', routePath: s.route,
+      providerLabel: providerDefs.find(p => p[0] === s.provider)[1],
+      lockIn: Math.floor(s.idle / 60) + ':' + pad(s.idle % 60),
+      lockNow: () => self.setState({ locked: true, idle: 0 }),
+      unlock: () => self.setState({ locked: false, idle: 900 }),
+      locked: s.locked,
+      poke: () => { if (s.idle < 880) self.setState({ idle: 900 }); },
+      isDash: s.route === '/', isMap: s.route === '/map', isKeys: s.route === '/keys',
+      isRewrap: s.route === '/rewrap', isPrivacy: s.route === '/privacy', isAudit: s.route === '/audit', isSettings: s.route === '/settings',
+
+      activeKek: Object.assign({}, activeKek, { depsFmt: fmt(subjects.filter(k => k.kek === 0 && k.state !== 'destroyed').length) }),
+      kekStateLabel: 'Active · ' + activeKek.algorithm, kekAge: String(kekAge),
+      kekBarStyle: 'height:100%;width:' + kekPct + '%;background:' + kekColor,
+      kekFlag, kekFlagDot: this.dot(kekColor, 6), kekFlagText: 'color:' + kekColor,
+      openRotate: () => self.setState({ rot: { keyId: activeKek.id, deks: fmt(activeKek.deps), duration: Math.max(3, Math.round(activeKek.deps / 900)) + ' min', error: '', busy: false } }),
+      tiles, health, spark,
+      spike: {
+        peakFmt: fmt(spikePeak), headline: 'failures at 19:00 — ' + Math.round(spikePeak / base) + '× the 24h baseline',
+        detail: s.ackSpike ? 'Acknowledged by a.mensah. 214 attempts from 3 service identities against 11 subject keys; all denied. Investigation open.' : 'All from service identity svc.api against keys it has never read before. Every failure returned the same generic message — no oracle was given to the caller.',
+        color: C.destroyed, border: s.ackSpike ? 'var(--color-divider)' : '#6d3a38'
+      },
+      ackSpike: () => { self.setState({ ackSpike: true }); self.log('alert.ack', '—', '—', 'ok'); },
+      goAudit: () => self.go('/audit'),
+
+      nodes, edges, legend, sel, noSel: !sel, hoverCard,
+      clearHover: () => self.setState({ hover: null }),
+      gTransform: 'translate(' + s.panX + ',' + s.panY + ') scale(' + s.zoom + ')',
+      layerStyle: 'position:absolute;inset:0;transform:translate(' + s.panX + 'px,' + s.panY + 'px) scale(' + s.zoom + ');transform-origin:0 0',
+      zoomIn: () => self.setState(st => ({ zoom: Math.min(2.2, st.zoom * 1.2) })),
+      zoomOut: () => self.setState(st => ({ zoom: Math.max(0.5, st.zoom / 1.2) })),
+      zoomFit: () => self.setState({ zoom: 1, panX: 0, panY: 0 }),
+
+      keySearch: s.keySearch, setKeySearch: e => self.setState({ keySearch: e.target.value }),
+      keyChips, keyCols, keyRows, keyCountLabel: rows.length + ' of ' + keys.length + ' keys · DEKs are never listed individually',
+
+      rewrap,
+
+      subjQuery: s.subjQuery, setSubjQuery: e => self.setState({ subjQuery: e.target.value }),
+      runSubjSearch: () => self.searchSubject(), subjSearchLabel: s.subjBusy ? 'Searching…' : 'Search',
+      useDemoSubject: () => { self.setState({ subjQuery: 'SUBJ-DEMO-4417' }, () => self.searchSubject()); },
+      subjError: s.subjError, subject, certificate,
+      isolated: s.isolated, closeIsolated: () => self.setState({ isolated: null }),
+
+      auditRows, chain, verifyChain: () => self.verifyChain(),
+      auditActor: s.auditActor, setAuditActor: e => self.setState({ auditActor: e.target.value }),
+      auditOp: s.auditOp, setAuditOp: e => self.setState({ auditOp: e.target.value }),
+      auditRange: s.auditRange, setAuditRange: e => self.setState({ auditRange: e.target.value }),
+      auditKey: s.auditKey, setAuditKey: e => self.setState({ auditKey: e.target.value }),
+      actorOpts: [{ v: 'all', l: 'All actors' }].concat(this.d.actors.map(a => ({ v: a, l: a }))),
+      opOpts: [{ v: 'all', l: 'All operations' }].concat(this.d.ops.map(a => ({ v: a, l: a }))),
+      rangeOpts: [{ v: '1h', l: 'Last hour' }, { v: '24h', l: 'Last 24 hours' }, { v: '7d', l: 'Last 7 days' }],
+      auditCountLabel: this.auditFiltered().length + ' entries match',
+      exportCsv: () => { self.download('keyring-audit.csv', ['timestamp,actor,operation,key_id,item_id,result,entry_hash'].concat(this.auditFiltered().map(a => [a.min < 0 ? this.ts(0) : this.ts(a.min), a.actor, a.op, a.keyId, a.itemId, a.result, a.hash].join(','))).join('\n')); self.log('audit.export', '—', '—', 'ok'); },
+
+      providers, rotInterval: s.rotInterval, setRotInterval: e => self.setState({ rotInterval: e.target.value }),
+      alertThreshold: s.alertThreshold, setAlertThreshold: e => self.setState({ alertThreshold: e.target.value }),
+      runBackup: () => self.runBackup(),
+      backup: {
+        btnLabel: s.backupState === 'busy' ? 'Running…' : 'Run backup verification',
+        result: s.backupResult,
+        style: 'font-size:12px;margin-top:9px;color:' + (s.backupState === 'fail' ? '#e0817c' : s.backupState === 'ok' ? '#7fd9b6' : 'var(--color-neutral-500)')
+      },
+      protects: ['Stolen disk or database dump', 'Leaked or exfiltrated backup', 'Storage-level read access', 'Insider with storage access but no application access'],
+      notProtects: ['Live server compromise with keys in memory', 'Application authorization bugs', 'Root-level administrator on the app host', 'Compromised client device or session'],
+
+      rot, closeRotate: () => self.setState({ rot: null }),
+      confirmRotate: async () => {
+        self.setState(st => ({ rot: Object.assign({}, st.rot, { busy: true, error: '' }) }));
+        try {
+          await self.call(0.15);
+          const id = 'kek-' + hex(rng(Date.now() % 99991), 8);
+          self.setState(st => ({
+            keys: st.keys.map(k => k.id === st.rot.keyId ? Object.assign({}, k, { state: 'deprecated' }) : k)
+              .concat([{ id, type: 'KEK', state: 'active', algorithm: 'AES-256-GCM', created: 0, rotated: 0, deps: 0 }]),
+            rot: null, rewrapDone: 0
+          }));
+          self.log('key.rotate', id, '—', 'ok');
+          self.flash('Rotated. ' + id + ' is active; rewrap queued. Reads unaffected.');
+          self.go('/rewrap');
+        } catch (e) {
+          self.setState(st => ({ rot: Object.assign({}, st.rot, { busy: false, error: e.message }) }));
+          self.log('key.rotate', s.rot.keyId, '—', 'error');
+        }
+      },
+      df, toast
+    };
+  }
+}
+
+</script>
+</body>
+</html>
