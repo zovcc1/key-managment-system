@@ -1,0 +1,10 @@
+# Without this, Git for Windows (core.autocrlf=true, the common default)
+# rewrites LF -> CRLF on checkout for any file it guesses is text. keyring.db
+# is a raw SQLite file and data/root.salt is raw binary — CRLF conversion
+# corrupts them, breaking every seeded demo account and the KEK vault.
+keyring.db binary
+*.db binary
+data/kek_store.enc.json binary
+data/root.passphrase binary
+data/root.salt binary
+*.png binary
