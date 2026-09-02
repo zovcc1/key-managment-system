@@ -7,6 +7,7 @@ import { getBlastRadius, getDownstream, getGraph } from "../api/endpoints";
 import type { BlastRadiusResponse, GraphNode, GraphResponse } from "../api/types";
 import RotateDialog from "../components/RotateDialog";
 import DestroyFlowDialog from "../components/DestroyFlowDialog";
+import { STATE_DOT } from "../lib/ui";
 
 interface Positioned extends GraphNode {
   x: number;
@@ -45,14 +46,6 @@ function layout(graph: GraphResponse): Positioned[] {
   }
   return positions;
 }
-
-const STATE_DOT: Record<string, string> = {
-  active: "#7fbf7f",
-  pending: "#9397ab",
-  deprecated: "#d9b46a",
-  revoked: "#d97878",
-  destroyed: "#595d6c",
-};
 
 export default function KeyMap() {
   const { hasScope, reportUnauthorized } = useAuth();

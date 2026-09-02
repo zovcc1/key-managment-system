@@ -7,6 +7,7 @@ const NAV: { to: string; key: ChromeKey; titleKey: ChromeKey }[] = [
   { to: "/dashboard", key: "nav.dashboard", titleKey: "title.dashboard" },
   { to: "/map", key: "nav.map", titleKey: "title.map" },
   { to: "/keys", key: "nav.keys", titleKey: "title.keys" },
+  { to: "/files", key: "nav.files", titleKey: "title.files" },
   { to: "/rewrap", key: "nav.rewrap", titleKey: "title.rewrap" },
   { to: "/privacy", key: "nav.privacy", titleKey: "title.privacy" },
   { to: "/audit", key: "nav.audit", titleKey: "title.audit" },

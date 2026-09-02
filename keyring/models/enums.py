@@ -35,6 +35,8 @@ class Operation(str, enum.Enum):
     APPROVAL_REQUEST = "approval_request"
     SESSION_OPEN = "session_open"
     SESSION_LOCK = "session_lock"
+    FILE_UPLOAD = "file_upload"
+    FILE_DOWNLOAD = "file_download"
 
 
 class ApprovalStatus(str, enum.Enum):

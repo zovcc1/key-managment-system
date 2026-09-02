@@ -18,16 +18,18 @@ from __future__ import annotations
 import hashlib
 import os
 import random
+import uuid
 from pathlib import Path
 
 from keyring.config import settings
-from keyring.core import crypto, runtime
+from keyring.core import blobstore, crypto, runtime
 from keyring.core.audit import append as audit_append
 from keyring.core.service import DEK_WRAP_INFO, KeyringService
 from keyring.db import SessionLocal
 from keyring.models.audit import AuditLog
 from keyring.models.enums import KeyState
 from keyring.models.envelope import Envelope
+from keyring.models.file_object import FileObject
 from keyring.models.keys import SubjectKey
 from keyring.models.session import Operator
 from keyring.models.settings_model import SystemSettings
@@ -276,6 +278,31 @@ def main() -> None:
         db.commit()
         demo_sk = service.get_subject_key_by_subject(DEMO_SUBJECT_ID)
         print(f"Demo subject {DEMO_SUBJECT_ID}: subject key {demo_sk.id}, {demo_sk.record_count} records across {len(DEMO_TABLES)} tables")
+
+        # --- Demo files: two small encrypted files under the demo subject, --
+        # so a fresh database shows the Files section already populated for
+        # the erasure walkthrough. Skipped if already seeded (idempotent).
+        if db.query(FileObject).filter(FileObject.subject_id == DEMO_SUBJECT_ID).count() == 0:
+            demo_files = [
+                ("welcome.txt", "text/plain", b"Welcome to the Keyring demo subject.\nThis file is encrypted at rest and crypto-shreddable.\n"),
+                ("profile.bin", "application/octet-stream", os.urandom(4096)),
+            ]
+            for filename, content_type, payload in demo_files:
+                file_id = str(uuid.uuid4())
+                env = service.encrypt_stream(
+                    subject_id=DEMO_SUBJECT_ID, table="files", column="content", record_id=file_id,
+                    plaintext_chunks=[payload], actor=admin_a, blob_ref=file_id,
+                )
+                digest = hashlib.sha256()
+                with blobstore.open_read(file_id) as fh:
+                    digest.update(fh.read())
+                db.add(FileObject(
+                    id=file_id, filename=filename, content_type=content_type, size_bytes=len(payload),
+                    ciphertext_sha256=digest.hexdigest(), envelope_id=env.id, subject_id=DEMO_SUBJECT_ID,
+                    uploaded_by=admin_a,
+                ))
+            db.commit()
+            print(f"Seeded {len(demo_files)} demo files under {DEMO_SUBJECT_ID}")
 
         total_envelopes = db.query(Envelope).count()
         total_subject_keys = db.query(SubjectKey).count()

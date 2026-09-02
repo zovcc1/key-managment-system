@@ -1,4 +1,4 @@
-import { api, fetchBlob, newIdempotencyKey } from "./client";
+import { api, fetchBlob, fetchBlobWithName, newIdempotencyKey, postForm } from "./client";
 import type {
   ApprovalResponse,
   AuditListResponse,
@@ -7,14 +7,19 @@ import type {
   BackupJobStatus,
   BlastRadiusResponse,
   CertificateResponse,
+  CiphertextPreviewResponse,
   DashboardResponse,
   DecryptFailuresResponse,
   DownstreamResponse,
   ErasureResponse,
   FieldDigestResponse,
+  FileDetail,
+  FileListResponse,
+  FileSummary,
   GraphResponse,
   KeyDetail,
   KeyListResponse,
+  KeyTreeResponse,
   ProvidersResponse,
   RewrapFailuresResponse,
   RewrapJobResponse,
@@ -163,5 +168,36 @@ export const activateProvider = (providerId: string) => api.post<{ active: strin
 export const startBackupVerify = () => api.post<BackupJobStartResponse>("/api/backup/verify");
 export const getBackupJob = (jobId: string) => api.get<BackupJobStatus>(`/api/backup/verify/${jobId}`);
 export const getThreatModel = () => api.get<ThreatModelResponse>("/api/threat-model");
+
+// ---- files -----------------------------------------------------------
+
+export interface ListFilesParams {
+  subjectId?: string;
+  q?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export const uploadFile = (file: File, subjectId: string) => {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("subjectId", subjectId);
+  return postForm<FileSummary>("/api/files", form);
+};
+
+export const listFiles = (params: ListFilesParams = {}) => {
+  const qs = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) {
+    if (v !== undefined && v !== null && v !== "") qs.set(k, String(v));
+  }
+  const suffix = qs.toString();
+  return api.get<FileListResponse>(`/api/files${suffix ? `?${suffix}` : ""}`);
+};
+
+export const getFile = (fileId: string) => api.get<FileDetail>(`/api/files/${fileId}`);
+export const getFileKeyTree = (fileId: string) => api.get<KeyTreeResponse>(`/api/files/${fileId}/key-tree`);
+export const getFileCiphertextPreview = (fileId: string, bytes = 256) =>
+  api.get<CiphertextPreviewResponse>(`/api/files/${fileId}/ciphertext-preview?bytes=${bytes}`);
+export const downloadFile = (fileId: string) => fetchBlobWithName(`/api/files/${fileId}/download`);
 
 export { newIdempotencyKey };

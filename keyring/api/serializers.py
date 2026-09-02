@@ -9,6 +9,7 @@ from keyring.config import settings
 from keyring.core.lifecycle import legal_transitions
 from keyring.core.timeutil import aware
 from keyring.models.envelope import Envelope
+from keyring.models.file_object import FileObject
 from keyring.models.keys import Kek, SubjectKey
 
 
@@ -77,3 +78,25 @@ def envelope_public(env: Envelope) -> dict:
 def kek_age_days(kek: Kek) -> int:
     reference = aware(kek.activated_at or kek.created_at)
     return (datetime.now(timezone.utc) - reference).days
+
+
+def file_summary(fo: FileObject) -> dict:
+    return {
+        "id": fo.id,
+        "filename": fo.filename,
+        "contentType": fo.content_type,
+        "sizeBytes": fo.size_bytes,
+        "subjectId": fo.subject_id,
+        "uploadedBy": fo.uploaded_by,
+        "uploadedAt": aware(fo.uploaded_at).isoformat(),
+        "envelopeId": fo.envelope_id,
+    }
+
+
+def file_detail(fo: FileObject, env: Envelope) -> dict:
+    d = file_summary(fo)
+    d["ciphertextSha256"] = fo.ciphertext_sha256
+    d["algorithm"] = env.alg
+    d["table"] = env.table_name
+    d["column"] = env.column_name
+    return d

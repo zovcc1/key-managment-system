@@ -10,12 +10,17 @@ from __future__ import annotations
 from keyring.models.enums import Role
 
 SCOPES: dict[str, list[str]] = {
-    Role.OPERATOR.value: ["encrypt", "decrypt"],
+    # file_write/file_read cover the Files section (upload, list, key tree,
+    # ciphertext preview). Download is deliberately gated on `decrypt`
+    # rather than `file_read` below (see keyring/api/files.py), so an
+    # auditor can inspect a file's key chain without ever obtaining
+    # plaintext — key-admin gets neither, preserving FR-9's separation.
+    Role.OPERATOR.value: ["encrypt", "decrypt", "file_write", "file_read"],
     Role.KEY_ADMIN.value: [
         "rotate", "revoke", "destroy", "rewrap_manage", "approve",
         "request_approval", "settings_write", "provider_activate",
     ],
-    Role.AUDITOR.value: ["audit_read"],
+    Role.AUDITOR.value: ["audit_read", "file_read"],
 }
 
 

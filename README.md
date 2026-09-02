@@ -88,6 +88,7 @@ Copy `.env` (already present with dev-safe defaults) or set the
 | `KEYRING_ROOT_SALT_FILE` | Argon2id salt file for the `file` provider | `./data/root.salt` |
 | `KEYRING_ROOT_SECRET_ENV_VAR` | Name of the env var holding the hex root secret for the `env` provider | `KEYRING_ROOT_SECRET` |
 | `KEYRING_KEK_STORE_PATH` | Local AES-256-GCM-wrapped KEK material store (outside the DB) | `./data/kek_store.enc.json` |
+| `KEYRING_BLOB_STORE_PATH` | Framed ciphertext for uploaded files (Files section) — envelope metadata still lives in the DB, only the ciphertext bytes live here | `./data/blobs` |
 | `KEYRING_VAULT_ADDR` / `KEYRING_VAULT_TOKEN_ENV_VAR` / `KEYRING_VAULT_MOUNT` | Vault transit-engine provider | — |
 | `KEYRING_KMS_ENDPOINT` / `KEYRING_KMS_TOKEN_ENV_VAR` | Generic envelope-encryption KMS provider | — |
 | `KEYRING_CERT_SIGNING_KEY` | HMAC key signing erasure certificates | (dev-only default in `.env`) |
@@ -109,7 +110,26 @@ It also leaves a deliberately-corrupted audit entry (for `POST
 /api/audit/verify`), a KEK mid-rotation with a partially-advanced rewrap job
 (the background worker in `keyring.main` finishes it once a session has
 opened a provider connection), and a `demo-subject-0001` subject with
-records across five tables reserved for an end-to-end erasure walkthrough.
+records across five tables reserved for an end-to-end erasure walkthrough —
+including two demo files in the **Files** section (see below), so the same
+erasure makes them visibly unreadable too.
+
+### Files section
+
+Upload a file (`file_write` scope — operators only) and it's streamed
+through the same envelope-encryption path as everything else
+(`KeyringService.encrypt_stream`), framed and written to
+`KEYRING_BLOB_STORE_PATH` rather than the database — the envelope row keeps
+only the wrapped DEK and nonces. Selecting a file (`file_read` scope —
+operators and auditors) shows its ciphertext as stored (hex, never
+plaintext) and its full key tree — provider → KEK → subject key → this
+file's DEK → envelope — each node annotated with live state, so a revoked or
+crypto-shredded ancestor visibly marks the file unreadable.
+Download (`decrypt` scope) streams the plaintext back out; after the owning
+subject is erased, the same button returns `DECRYPT_FAILED` while the
+ciphertext blob stays on disk as the shredding proof. See
+[`THREAT_MODEL.md`](THREAT_MODEL.md) for the trade-offs of storing ciphertext
+outside the database.
 
 ## Development mode
 

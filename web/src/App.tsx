@@ -10,6 +10,7 @@ import Dashboard from "./routes/Dashboard";
 import KeyMap from "./routes/KeyMap";
 import Keys from "./routes/Keys";
 import Rewrap from "./routes/Rewrap";
+import Files from "./routes/Files";
 import Privacy from "./routes/Privacy";
 import Audit from "./routes/Audit";
 import Settings from "./routes/Settings";
@@ -39,6 +40,7 @@ function Routed() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="map" element={<KeyMap />} />
         <Route path="keys" element={<Keys />} />
+        <Route path="files" element={<Files />} />
         <Route path="rewrap" element={<Rewrap />} />
         <Route path="privacy" element={<Privacy />} />
         <Route path="audit" element={<Audit />} />

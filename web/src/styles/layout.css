@@ -153,6 +153,28 @@ html[dir='rtl'] .kr-map-inspector { right: auto; left: var(--space-3); }
 }
 .kr-isolated-value { font-family: var(--font-mono); font-size: 13px; word-break: break-all; }
 
+/* — file key tree — */
+.kr-keytree {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.kr-keytree-node {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 6px var(--space-2);
+  border-inline-start: 2px solid var(--color-divider);
+  font-size: 12px;
+}
+.kr-keytree-kind { min-width: 110px; font-weight: 500; }
+.kr-keytree-dimmed {
+  opacity: 0.45;
+  border-inline-start-color: #d97878;
+}
+
 /* — sparkline — */
 .kr-spark { display: block; }
 .kr-spark-bar { fill: var(--color-accent); }

@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     # This lives outside the application database, per FR-6.1.
     kek_store_path: str = "./data/kek_store.enc.json"
 
+    # Filesystem store for streamed file ciphertext (see keyring/core/blobstore.py).
+    # Envelope metadata (wrapped DEK, nonces) still lives in the database;
+    # only the framed ciphertext bytes live here.
+    blob_store_path: str = "./data/blobs"
+
     # Vault provider
     vault_addr: str = "http://127.0.0.1:8200"
     vault_token_env_var: str = "KEYRING_VAULT_TOKEN"

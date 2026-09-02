@@ -39,6 +39,11 @@ class Envelope(Base):
     ciphertext: Mapped[bytes] = mapped_column(LargeBinary)
     tag: Mapped[bytes] = mapped_column(LargeBinary)
 
+    # Set only for streamed envelopes whose framed ciphertext lives on disk
+    # (see keyring/core/blobstore.py) instead of in `ciphertext`, which is
+    # then b"". Every other envelope leaves this null.
+    blob_ref: Mapped[str | None] = mapped_column(String(64), nullable=True)
+
     # Logical location — the exact inputs used to build the AAD at
     # encryption time. table/col/id/subject must match at decrypt time or
     # the AEAD tag verification fails (FR-3.2).

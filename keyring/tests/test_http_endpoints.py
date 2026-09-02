@@ -43,7 +43,7 @@ def test_open_session_returns_token_role_and_scopes(client):
     body = resp.json()
     assert body["operator"] == "Dan"
     assert body["role"] == "operator"
-    assert set(body["scopes"]) == {"encrypt", "decrypt"}
+    assert set(body["scopes"]) == {"encrypt", "decrypt", "file_read", "file_write"}
     assert body["locked"] is False
     assert "token" in body and "expiresAt" in body
 

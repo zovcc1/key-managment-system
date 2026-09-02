@@ -7,8 +7,8 @@ from keyring.core import rbac
 from keyring.models.enums import Role
 
 
-def test_operator_scopes_are_exactly_encrypt_decrypt():
-    assert set(rbac.scopes_for(Role.OPERATOR.value)) == {"encrypt", "decrypt"}
+def test_operator_scopes_are_exactly_encrypt_decrypt_file_read_write():
+    assert set(rbac.scopes_for(Role.OPERATOR.value)) == {"encrypt", "decrypt", "file_read", "file_write"}
 
 
 def test_key_admin_scopes_are_exactly_the_destructive_and_management_set():
@@ -18,8 +18,8 @@ def test_key_admin_scopes_are_exactly_the_destructive_and_management_set():
     }
 
 
-def test_auditor_scopes_are_exactly_audit_read():
-    assert set(rbac.scopes_for(Role.AUDITOR.value)) == {"audit_read"}
+def test_auditor_scopes_are_exactly_audit_read_and_file_read():
+    assert set(rbac.scopes_for(Role.AUDITOR.value)) == {"audit_read", "file_read"}
 
 
 def test_unknown_role_has_no_scopes():

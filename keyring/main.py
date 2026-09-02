@@ -12,7 +12,7 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import select
 
 from keyring import models  # noqa: F401 — registers all mappers
-from keyring.api import approvals, audit, core_ops, dashboard, graph, keys, rewrap, session, settings as settings_api, subjects
+from keyring.api import approvals, audit, core_ops, dashboard, files, graph, keys, rewrap, session, settings as settings_api, subjects
 from keyring.core.crypto import DecryptFailed, assert_csprng_available
 from keyring.core.errors import KeyringError
 from keyring.core.lifecycle import IllegalTransition
@@ -115,6 +115,7 @@ app.include_router(subjects.router)
 app.include_router(audit.router)
 app.include_router(settings_api.router)
 app.include_router(core_ops.router)
+app.include_router(files.router)
 
 # Production static mount: serves the built console from this same process
 # (`npm run build` in web/, output at web/dist). Mounted last and at "/" so

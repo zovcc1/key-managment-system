@@ -225,3 +225,56 @@ export interface ThreatModelResponse {
   doesNotProtectAgainst: string[];
   closing: string;
 }
+
+// ---- files -----------------------------------------------------------
+
+export interface FileSummary {
+  id: string;
+  filename: string;
+  contentType: string;
+  sizeBytes: number;
+  subjectId: string;
+  uploadedBy: string;
+  uploadedAt: string;
+  envelopeId: string;
+}
+
+export interface FileDetail extends FileSummary {
+  ciphertextSha256: string;
+  algorithm: string;
+  table: string;
+  column: string;
+}
+
+export interface FileListResponse {
+  items: FileSummary[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+export type KeyTreeNodeKind = "root_secret" | "kek" | "subject_key" | "dek" | "envelope";
+
+export interface KeyTreeNode {
+  level: number;
+  kind: KeyTreeNodeKind;
+  id: string | null;
+  state: string;
+  algorithm: string | null;
+  usable: boolean;
+}
+
+export interface KeyTreeResponse {
+  fileId: string;
+  nodes: KeyTreeNode[];
+  readable: boolean;
+  brokenAtLevel: number | null;
+  blobPresent: boolean;
+}
+
+export interface CiphertextPreviewResponse {
+  hex: string;
+  previewBytes: number;
+  totalBytes: number;
+  blobPresent: boolean;
+}

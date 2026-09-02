@@ -127,3 +127,39 @@ export async function fetchBlob(path: string): Promise<Blob> {
   }
   return res.blob();
 }
+
+/** Same as fetchBlob, but also recovers the server-chosen filename from
+ * Content-Disposition (RFC 5987 filename*=) — used by file downloads, where
+ * the name isn't known ahead of the request the way a certificate export's
+ * name is. */
+export async function fetchBlobWithName(path: string): Promise<{ blob: Blob; filename: string | null }> {
+  const headers: Record<string, string> = { "Accept-Language": _locale };
+  if (_token) headers["Authorization"] = `Bearer ${_token}`;
+  const res = await fetch(BASE_URL + path, { headers });
+  if (!res.ok) {
+    const payload = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, payload.code || "ERROR", payload.message || res.statusText, payload);
+  }
+  const disposition = res.headers.get("content-disposition") || "";
+  const match = /filename\*=UTF-8''([^;]+)/.exec(disposition);
+  const filename = match ? decodeURIComponent(match[1]) : null;
+  return { blob: await res.blob(), filename };
+}
+
+/** Multipart upload — deliberately does not set Content-Type so the browser
+ * can attach its own multipart boundary (see `request()`'s comment on the
+ * same point). */
+export async function postForm<T>(path: string, form: FormData): Promise<T> {
+  const headers: Record<string, string> = { "Accept-Language": _locale };
+  if (_token) headers["Authorization"] = `Bearer ${_token}`;
+  const res = await fetch(BASE_URL + path, { method: "POST", headers, body: form });
+  const contentType = res.headers.get("content-type") || "";
+  if (!res.ok) {
+    if (contentType.includes("application/json")) {
+      const payload = await res.json();
+      throw new ApiError(res.status, payload.code || "ERROR", payload.message || res.statusText, payload);
+    }
+    throw new ApiError(res.status, "ERROR", await res.text().catch(() => res.statusText));
+  }
+  return (await res.json()) as T;
+}

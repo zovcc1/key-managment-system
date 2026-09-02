@@ -1,6 +1,7 @@
 from keyring.models.enums import ApprovalStatus, KeyState, KeyType, Operation, Role
 from keyring.models.keys import Kek, SubjectKey
 from keyring.models.envelope import Envelope
+from keyring.models.file_object import FileObject
 from keyring.models.audit import AuditLog, DecryptFailureLog
 from keyring.models.approvals import Approval
 from keyring.models.rewrap import RewrapFailure, RewrapJob
@@ -18,6 +19,7 @@ __all__ = [
     "Kek",
     "SubjectKey",
     "Envelope",
+    "FileObject",
     "AuditLog",
     "DecryptFailureLog",
     "Approval",

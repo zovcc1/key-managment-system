@@ -5,6 +5,8 @@ layer never touches `provider` or a `bytearray` directly.
 """
 from __future__ import annotations
 
+import contextlib
+import io
 import uuid
 from datetime import datetime, timezone
 
@@ -12,7 +14,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session as DbSession
 
-from keyring.core import audit, crypto, lifecycle
+from keyring.core import audit, blobstore, crypto, lifecycle
 from keyring.core.errors import (
     ActiveConflictError,
     BlockingDependentsError,
@@ -46,6 +48,14 @@ def _now() -> datetime:
 
 def _dek_wrap_aad(subject_id: str) -> bytes:
     return DEK_WRAP_INFO + b"|subject:" + subject_id.encode("utf-8")
+
+
+@contextlib.contextmanager
+def _noop_ctx():
+    """Stand-in for blobstore.write_stream() when encrypt_stream() is not
+    writing to a blob — keeps the `with ... as fh:` shape identical for both
+    the inline (fh is None) and blob-backed paths."""
+    yield None
 
 
 class KeyringService:
@@ -411,18 +421,29 @@ class KeyringService:
     # Streaming encrypt / decrypt (FR-2.5)
     # ------------------------------------------------------------------
 
-    def encrypt_stream(self, *, subject_id: str, table: str, column: str, record_id: str, plaintext_chunks, actor: str) -> Envelope:
+    def encrypt_stream(
+        self, *, subject_id: str, table: str, column: str, record_id: str, plaintext_chunks, actor: str,
+        blob_ref: str | None = None,
+    ) -> Envelope:
         """Same envelope shape and guarantees as encrypt(), but consumes an
         iterable of plaintext chunks (e.g. a generator reading a file in
         STREAM_CHUNK_SIZE pieces) instead of one in-memory bytes object.
         Uses a one-chunk lookahead so the final chunk's AAD can be bound to
-        `final:1` without ever holding the whole plaintext at once."""
+        `final:1` without ever holding the whole plaintext at once.
+
+        When `blob_ref` is given, each frame is written straight to the blob
+        store (keyring/core/blobstore.py) as it is produced instead of being
+        accumulated in memory, and the envelope's `ciphertext` column is left
+        empty (`blob_ref` records where the framed ciphertext actually
+        lives). A write failure partway through leaves no blob at `blob_ref`
+        (see blobstore.write_stream) and this method raises before adding
+        any Envelope row — same all-or-nothing shape as the inline path."""
         sk = self._get_or_create_subject_key(subject_id, actor)
         kek = self.get_kek(sk.kek_id)
 
         subject_raw = bytearray(self.provider.unwrap(kek.provider_ref, sk.wrapped_key))
         dek = bytearray(crypto.generate_key())
-        framed = bytearray()
+        framed = bytearray() if blob_ref is None else None
         chunk_count = 0
         total_bytes = 0
         try:
@@ -436,21 +457,25 @@ class KeyringService:
             if pending is sentinel:
                 pending = b""  # empty stream still yields exactly one (empty, final) chunk
             index = 0
-            while True:
-                current = pending
-                pending = next(iterator, sentinel)
-                is_final = pending is sentinel
-                nonce = crypto.chunk_nonce(nonce_prefix, index)
-                aad = crypto.stream_chunk_aad(base_aad, index, is_final)
-                result = crypto.aead_encrypt_with_nonce(bytes(dek), nonce, current, aad)
-                framed += len(result.ciphertext).to_bytes(_FRAME_LEN_BYTES, "big")
-                framed += result.ciphertext
-                framed += result.tag
-                total_bytes += len(current)
-                chunk_count += 1
-                index += 1
-                if is_final:
-                    break
+            blob_handle = blobstore.write_stream(blob_ref) if blob_ref is not None else None
+            with blob_handle if blob_handle is not None else _noop_ctx() as fh:
+                while True:
+                    current = pending
+                    pending = next(iterator, sentinel)
+                    is_final = pending is sentinel
+                    nonce = crypto.chunk_nonce(nonce_prefix, index)
+                    aad = crypto.stream_chunk_aad(base_aad, index, is_final)
+                    result = crypto.aead_encrypt_with_nonce(bytes(dek), nonce, current, aad)
+                    frame = len(result.ciphertext).to_bytes(_FRAME_LEN_BYTES, "big") + result.ciphertext + result.tag
+                    if fh is not None:
+                        fh.write(frame)
+                    else:
+                        framed += frame
+                    total_bytes += len(current)
+                    chunk_count += 1
+                    index += 1
+                    if is_final:
+                        break
         finally:
             crypto.zeroize(subject_raw)
             crypto.zeroize(dek)
@@ -458,7 +483,8 @@ class KeyringService:
         env = Envelope(
             v=crypto.ENVELOPE_VERSION, alg=STREAM_ALG, kek_id=kek.id, subject_key_id=sk.id,
             wrapped_dek=dek_wrap.ciphertext + dek_wrap.tag, dek_nonce=dek_wrap.nonce,
-            data_nonce=nonce_prefix, ciphertext=bytes(framed), tag=b"",
+            data_nonce=nonce_prefix, ciphertext=(bytes(framed) if framed is not None else b""), tag=b"",
+            blob_ref=blob_ref,
             table_name=table, column_name=column, record_id=record_id, subject_id=subject_id,
         )
         self.db.add(env)
@@ -473,11 +499,15 @@ class KeyringService:
     def decrypt_stream(self, envelope_id: str, actor: str):
         """Validates the envelope and unwraps its DEK eagerly (so a bad
         envelope_id fails immediately, like decrypt()), then returns a
-        generator yielding plaintext chunks one at a time. The whole
-        ciphertext blob is loaded once from the DB row — streaming here
-        bounds *plaintext* memory during decryption to one chunk at a time,
-        not the DB read itself, matching how it is stored (see STREAM_ALG
-        comment above)."""
+        generator yielding plaintext chunks one at a time.
+
+        For inline envelopes the whole ciphertext blob is loaded once from
+        the DB row; for blob-backed envelopes (`env.blob_ref` set) frames are
+        read incrementally from the blob store instead, so plaintext memory
+        stays bounded to one chunk at a time either way (see STREAM_ALG
+        comment above). A missing blob is checked eagerly, alongside the
+        other envelope/key validity checks, and fails exactly like every
+        other decrypt failure (FR-3.4) — never a distinguishable error."""
         env = self.db.get(Envelope, envelope_id)
         try:
             if env is None or env.alg != STREAM_ALG:
@@ -491,6 +521,10 @@ class KeyringService:
 
             kek = self.db.get(Kek, env.kek_id)
             if kek is None or kek.state in (KeyState.REVOKED.value, KeyState.DESTROYED.value):
+                self._decoy_aead_attempt()
+                raise crypto.DecryptFailed()
+
+            if env.blob_ref is not None and not blobstore.exists(env.blob_ref):
                 self._decoy_aead_attempt()
                 raise crypto.DecryptFailed()
 
@@ -514,32 +548,42 @@ class KeyringService:
 
         base_aad = env.aad()
         nonce_prefix = env.data_nonce
-        framed = env.ciphertext
+        blob_ref = env.blob_ref
+        inline_ciphertext = env.ciphertext
         db = self.db
 
         def _chunks():
             try:
-                offset = 0
-                index = 0
-                total = len(framed)
-                while offset < total:
-                    length = int.from_bytes(framed[offset:offset + _FRAME_LEN_BYTES], "big")
-                    offset += _FRAME_LEN_BYTES
-                    ct = framed[offset:offset + length]
-                    offset += length
-                    frame_tag = framed[offset:offset + crypto.TAG_LEN]
-                    offset += crypto.TAG_LEN
-                    is_final = offset >= total
-                    nonce = crypto.chunk_nonce(nonce_prefix, index)
-                    aad = crypto.stream_chunk_aad(base_aad, index, is_final)
-                    try:
-                        yield crypto.aead_decrypt(bytes(dek), nonce, ct, frame_tag, aad)
-                    except crypto.DecryptFailed:
-                        db.add(DecryptFailureLog(actor=actor, envelope_id=envelope_id, reason_code="attempt_failed"))
-                        audit.append(db, actor=actor, operation="decrypt_failed", item_id=envelope_id, result="failure")
-                        db.flush()
-                        raise
-                    index += 1
+                if blob_ref is not None:
+                    source: io.IOBase = blobstore.open_read(blob_ref)
+                    total = blobstore.size(blob_ref)
+                else:
+                    source = io.BytesIO(inline_ciphertext)
+                    total = len(inline_ciphertext)
+                try:
+                    offset = 0
+                    index = 0
+                    while offset < total:
+                        length = int.from_bytes(source.read(_FRAME_LEN_BYTES), "big")
+                        offset += _FRAME_LEN_BYTES
+                        ct = source.read(length)
+                        offset += length
+                        frame_tag = source.read(crypto.TAG_LEN)
+                        offset += crypto.TAG_LEN
+                        is_final = offset >= total
+                        nonce = crypto.chunk_nonce(nonce_prefix, index)
+                        aad = crypto.stream_chunk_aad(base_aad, index, is_final)
+                        try:
+                            yield crypto.aead_decrypt(bytes(dek), nonce, ct, frame_tag, aad)
+                        except crypto.DecryptFailed:
+                            db.add(DecryptFailureLog(actor=actor, envelope_id=envelope_id, reason_code="attempt_failed"))
+                            audit.append(db, actor=actor, operation="decrypt_failed", item_id=envelope_id, result="failure")
+                            db.flush()
+                            raise
+                        index += 1
+                finally:
+                    if blob_ref is not None:
+                        source.close()
             finally:
                 crypto.zeroize(dek)
 
@@ -618,3 +662,61 @@ class KeyringService:
             select(Envelope.table_name).where(Envelope.subject_key_id == sk.id).distinct()
         ).scalars().all()
         return {"recordCount": record_count, "tables": sorted(tables), "downstreamKeyCount": 0}
+
+    # ------------------------------------------------------------------
+    # File key tree (Files section)
+    # ------------------------------------------------------------------
+
+    def file_key_tree(self, file_object) -> dict:
+        """Full ancestry for one uploaded file: provider (root secret,
+        never displayed) -> KEK -> subject key -> this file's single-use DEK
+        -> envelope, each annotated with its live state. Mirrors the same
+        legality checks decrypt_stream() enforces, without ever attempting a
+        decrypt, so it is safe for `file_read`-scoped callers (e.g. an
+        auditor) who must never see plaintext."""
+        env = self.db.get(Envelope, file_object.envelope_id)
+        if env is None:
+            raise NotFoundError(target="envelope")
+        sk = self.db.get(SubjectKey, env.subject_key_id)
+        kek = self.db.get(Kek, env.kek_id)
+
+        nodes: list[dict] = [
+            {"level": 0, "kind": "root_secret", "id": None, "state": "active", "algorithm": self.provider.name, "usable": True},
+        ]
+        broken_at: int | None = None
+
+        kek_usable = kek is not None and kek.state not in (KeyState.REVOKED.value, KeyState.DESTROYED.value)
+        nodes.append({
+            "level": 1, "kind": "kek", "id": kek.id if kek else None,
+            "state": kek.state if kek else "missing", "algorithm": kek.algorithm if kek else None,
+            "usable": kek_usable,
+        })
+        if not kek_usable and broken_at is None:
+            broken_at = 1
+
+        sk_usable = kek_usable and sk is not None and sk.state not in (KeyState.REVOKED.value, KeyState.DESTROYED.value)
+        nodes.append({
+            "level": 2, "kind": "subject_key", "id": sk.id if sk else None,
+            "state": sk.state if sk else "missing", "algorithm": sk.algorithm if sk else None,
+            "usable": sk_usable,
+        })
+        if not sk_usable and broken_at is None:
+            broken_at = 2
+
+        nodes.append({"level": 3, "kind": "dek", "id": None, "state": "single-use", "algorithm": "AES-256-GCM", "usable": sk_usable})
+        if not sk_usable and broken_at is None:
+            broken_at = 3
+
+        blob_present = env.blob_ref is None or blobstore.exists(env.blob_ref)
+        env_usable = sk_usable and blob_present
+        nodes.append({"level": 4, "kind": "envelope", "id": env.id, "state": env.alg, "algorithm": env.alg, "usable": env_usable})
+        if not env_usable and broken_at is None:
+            broken_at = 4
+
+        return {
+            "fileId": file_object.id,
+            "nodes": nodes,
+            "readable": broken_at is None,
+            "brokenAtLevel": broken_at,
+            "blobPresent": blob_present,
+        }

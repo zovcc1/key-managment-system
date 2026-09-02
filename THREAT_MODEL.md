@@ -15,7 +15,8 @@ clients that want to surface it in-product.
 | Root secret | Outside the app DB entirely — a provider-specific secret (passphrase file, env var, Vault/KMS-held key) | Compromise unwraps every KEK, and transitively every subject key and every record |
 | KEKs (Key Encryption Keys) | Raw bytes never touch the app DB; only an opaque `provider_ref` handle does (FR-6.1) | Compromise of one KEK exposes every subject key it wraps, until rotated away from |
 | Subject keys (DEK-wrapping keys) | Wrapped (AES-256-GCM) under a KEK, stored in the app DB as `wrapped_key` | Compromise exposes every record for that one subject; destruction of this row is the entire crypto-shredding mechanism |
-| DEKs (Data Encryption Keys) | Single-use per record, wrapped under the subject key, stored inline in the `Envelope` row, never persisted unwrapped | Compromise exposes exactly one record |
+| DEKs (Data Encryption Keys) | Single-use per record, wrapped under the subject key, stored inline in the `Envelope` row (or, for uploaded files, `b""` — see the blob store row below), never persisted unwrapped | Compromise exposes exactly one record |
+| File ciphertext blobs | Framed AEAD ciphertext for uploaded files, on the filesystem at `KEYRING_BLOB_STORE_PATH`, addressed by a UUID (`Envelope.blob_ref`) — the DB keeps the envelope metadata (wrapped DEK, nonces), not the ciphertext bytes | Same exposure as any other ciphertext (worthless without the DEK chain above it), but see the backup-drift note in §5 — this is the one asset that lives *outside* the database |
 | Plaintext | Held in process memory only for the duration of one encrypt/decrypt call; zeroized (best-effort) immediately after | The thing everything above exists to protect |
 | Audit log | Hash-chained, append-only, in the app DB | Tamper-evidence for who did what; not itself secret, but its integrity is a security property |
 
@@ -120,3 +121,21 @@ This is the exact content served by `GET /api/threat-model`:
   the file's owner from every other account on the machine. Treat `file` on
   Windows as a development-only configuration; use `env`, `vault`, or `kms`
   for anything production.
+- **File blob store breaks the single-source-of-truth erasure proof**: every
+  other asset in this system lives in the application database, so "restore
+  the DB, the ciphertext and the key metadata are consistent with each
+  other" always holds. Uploaded-file ciphertext (`keyring/core/blobstore.py`)
+  is the one exception — it lives on the filesystem, written before the DB
+  commit (temp-file + fsync + atomic rename, but still not transactional
+  with it). A `keyring.db` restored from one backup point paired with a
+  `data/blobs/` directory from a different one can drift: a missing blob
+  looks byte-for-byte identical, at the decrypt layer, to a correctly
+  crypto-shredded one — `decrypt_stream` raises the same `DECRYPT_FAILED`
+  either way, by design (FR-3.4's uniform-failure guarantee doesn't carve
+  out an exception for "the file is just missing"). The mitigation is
+  visibility, not prevention: every file-read endpoint (`GET
+  /api/files/{id}/key-tree`, `GET /api/files/{id}/ciphertext-preview`)
+  separately reports `blobPresent`, so an operator can tell "shredded" apart
+  from "backup drift" without that distinction ever leaking through the
+  decrypt path itself. Back up `data/blobs/` and `keyring.db` together, on
+  the same schedule, as a single unit.

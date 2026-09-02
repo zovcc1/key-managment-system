@@ -6,17 +6,9 @@ import { ApiError } from "../api/client";
 import { exportCertificate, getCertificate, getFieldDigest, getSubject, verifyUnreadable } from "../api/endpoints";
 import type { CertificateResponse, FieldDigestResponse, SubjectResponse, VerifyUnreadableResponse } from "../api/types";
 import DestroyFlowDialog from "../components/DestroyFlowDialog";
+import { downloadBlob } from "../lib/ui";
 
 const DEMO_SUBJECT_ID = "demo-subject-0001";
-
-function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
 
 export default function Privacy() {
   const { hasScope, reportUnauthorized } = useAuth();
