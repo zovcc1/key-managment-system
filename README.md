@@ -181,3 +181,18 @@ the API process — no separate frontend server is required.
   by the vault/kms providers), not test-only.
 - **Blank page / 404 at `/`** — `web/dist` is missing or incomplete. Run
   `cd web && npm install && npm run build`, or re-run the launcher script.
+- **Demo API keys (Alice/Bob/Carol/Dan) return `UNAUTHORIZED` on a fresh
+  Windows clone** — Git for Windows commonly defaults to
+  `core.autocrlf=true`, which rewrites LF to CRLF on checkout for any file
+  it guesses is text. `keyring.db` is a raw SQLite file (and `data/root.salt`
+  is raw binary), so that rewrite corrupts them, wiping out the seeded demo
+  accounts. This repo ships a `.gitattributes` marking both as binary to
+  prevent it going forward, but a clone made *before* that fix already has
+  the corrupted files on disk — pulling alone won't re-checkout them. Fix
+  it with:
+  ```
+  git pull
+  git rm --cached keyring.db data/root.salt
+  git checkout keyring.db data/root.salt
+  ```
+  or simplest, delete the local folder and re-clone.
