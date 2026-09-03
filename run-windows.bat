@@ -103,10 +103,11 @@ if not exist "web\dist\index.html" (
 
 echo.
 echo Demo API keys ^(X-Api-Key header on POST /api/session^):
-echo   Alice ^(key-admin^): demo-key-admin-alice-9f2a
-echo   Bob   ^(key-admin^): demo-key-admin-bob-7c31
-echo   Carol ^(auditor^):   demo-auditor-carol-1e88
-echo   Dan   ^(operator^):  demo-operator-dan-4b60
+echo   Alice ^(key-admin^):   demo-key-admin-alice-9f2a
+echo   Bob   ^(key-admin^):   demo-key-admin-bob-7c31
+echo   Carol ^(auditor^):     demo-auditor-carol-1e88
+echo   Dan   ^(operator^):    demo-operator-dan-4b60
+echo   Root  ^(super-admin^): demo-super-admin-root-0e77   ^(dev-only, all scopes^)
 echo.
 echo Starting API + console at http://127.0.0.1:8010 ...
 start "" http://127.0.0.1:8010

@@ -21,6 +21,18 @@ SCOPES: dict[str, list[str]] = {
         "request_approval", "settings_write", "provider_activate",
     ],
     Role.AUDITOR.value: ["audit_read", "file_read"],
+    # Dev/demo "break-glass" role only — deliberately holds every scope,
+    # including both `destroy` and `audit_read` together, which is the
+    # exact combination FR-9.2 exists to prevent (see THREAT_MODEL.md §5,
+    # "super-admin role" note). Not part of the production RBAC model;
+    # exists so a local operator can reach every screen without juggling
+    # four demo credentials.
+    Role.SUPER_ADMIN.value: [
+        "encrypt", "decrypt", "file_write", "file_read",
+        "rotate", "revoke", "destroy", "rewrap_manage", "approve",
+        "request_approval", "settings_write", "provider_activate",
+        "audit_read",
+    ],
 }
 
 

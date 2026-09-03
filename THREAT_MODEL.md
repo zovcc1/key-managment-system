@@ -121,6 +121,18 @@ This is the exact content served by `GET /api/threat-model`:
   the file's owner from every other account on the machine. Treat `file` on
   Windows as a development-only configuration; use `env`, `vault`, or `kms`
   for anything production.
+- **`super-admin` role is a deliberate, documented break of FR-9**: the
+  three production roles are structurally kept from ever holding both
+  `destroy` and `audit_read` (§3, "a single compromised or malicious
+  operator credential"); `super-admin` (seeded as `Root`, dev/demo only)
+  holds every scope at once, specifically to remove that separation for
+  local convenience. A credential with this role compromised is equivalent
+  to compromising a key-admin and an auditor simultaneously — it can
+  destroy key material and cover its tracks in the audit log's *read* path
+  (the audit log itself is still append-only and hash-chained regardless of
+  who reads it, so tampering is still detectable, but the FR-9 guarantee
+  that no single role can even attempt both is gone). Do not provision this
+  role outside local dev/demo environments.
 - **File blob store breaks the single-source-of-truth erasure proof**: every
   other asset in this system lives in the application database, so "restore
   the DB, the ciphertext and the key metadata are consistent with each

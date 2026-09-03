@@ -45,6 +45,8 @@ OPERATOR_SEEDS = [
     ("Bob", "key-admin", "demo-key-admin-bob-7c31"),
     ("Carol", "auditor", "demo-auditor-carol-1e88"),
     ("Dan", "operator", "demo-operator-dan-4b60"),
+    # Dev/demo break-glass account — every scope, see rbac.py's SUPER_ADMIN note.
+    ("Root", "super-admin", "demo-super-admin-root-0e77"),
 ]
 
 

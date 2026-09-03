@@ -2,7 +2,7 @@
 // each router's return dict. Field names are exactly what the backend
 // emits (camelCase) — no renaming layer.
 
-export type Role = "operator" | "key-admin" | "auditor";
+export type Role = "operator" | "key-admin" | "auditor" | "super-admin";
 export type KeyState = "pending" | "active" | "deprecated" | "revoked" | "destroyed";
 
 export interface SessionOpenResponse {

@@ -105,6 +105,15 @@ operator API keys (`X-Api-Key` header on `POST /api/session`):
 | Bob | key-admin | `demo-key-admin-bob-7c31` |
 | Carol | auditor | `demo-auditor-carol-1e88` |
 | Dan | operator | `demo-operator-dan-4b60` |
+| Root | super-admin (dev-only, all scopes) | `demo-super-admin-root-0e77` |
+
+Root's `super-admin` role holds every scope at once, including both
+`destroy` and `audit_read` — the one combination the RBAC model otherwise
+never allows a single role to hold (see FR-9 in
+[`THREAT_MODEL.md`](THREAT_MODEL.md)). It exists so a local operator can
+reach every screen without juggling four credentials; it is not part of the
+production RBAC model and should not be provisioned outside local dev/demo
+use.
 
 It also leaves a deliberately-corrupted audit entry (for `POST
 /api/audit/verify`), a KEK mid-rotation with a partially-advanced rewrap job

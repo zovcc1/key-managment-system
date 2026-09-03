@@ -20,6 +20,7 @@ class Role(str, enum.Enum):
     OPERATOR = "operator"
     KEY_ADMIN = "key-admin"
     AUDITOR = "auditor"
+    SUPER_ADMIN = "super-admin"
 
 
 class Operation(str, enum.Enum):
