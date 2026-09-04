@@ -22,6 +22,10 @@ console if needed, and starts the server.
 run-windows.bat
 ```
 
+If Windows Defender blocks it, see
+[Troubleshooting](#troubleshooting) below — it's SmartScreen, not a real
+detection.
+
 **Linux / macOS**:
 
 ```bash
@@ -29,8 +33,9 @@ run-windows.bat
 ```
 
 Then open **http://127.0.0.1:8010** and sign in with API key
-`demo-key-admin-alice-9f2a` (see [Demo credentials](#demo-credentials--seed-data)
-for the rest). Re-running the script is safe — every step is idempotent.
+`demo-super-admin-root-0e77` (Root, all scopes — see
+[Demo credentials](#demo-credentials--seed-data) for the other four, restricted
+production-role keys). Re-running the script is safe — every step is idempotent.
 
 ## Requirements
 
@@ -200,6 +205,31 @@ the API process — no separate frontend server is required.
 
 ## Troubleshooting
 
+- **Windows Defender / "Windows protected your PC" blocks `run-windows.bat`**
+  — this is SmartScreen reacting to the Mark of the Web tag Windows stamps on
+  any file that arrived via a browser download or a ZIP extracted from one
+  (downloading the repo as a ZIP tags every file this way; `git clone` does
+  not). It isn't a real detection of the script's contents. Fastest fixes,
+  cheapest first:
+  - On the SmartScreen dialog, click **More info** then **Run anyway**.
+  - Or clear the tag before running: right-click the file → Properties →
+    tick **Unblock** → OK. For the whole checkout at once, from the project
+    root in PowerShell:
+    ```powershell
+    Get-ChildItem -Recurse | Unblock-File
+    ```
+  - Or avoid it entirely — `git clone` the repo instead of downloading the
+    ZIP.
+  - If Defender actually quarantines the file rather than showing a dialog,
+    check Windows Security → Virus & threat protection → Protection history
+    for the verdict name; a generic/heuristic hit (plausible, since the
+    script silently runs `winget install`, `pip install`, and `npm install`)
+    can be cleared with a folder exclusion scoped to this project directory.
+    Don't disable real-time protection for this — it's unnecessary and this
+    is exactly the moment three separate dependency installers are about to
+    run.
+  - Or skip the script and run the [Manual setup](#manual-setup) commands
+    directly — same steps, no `.bat` for Defender to look at.
 - **`ProviderUnavailable: ... expected 0400`** — the secret files'
   permissions didn't survive a git clone (git doesn't track file modes).
   Run `chmod 0400 data/root.passphrase data/root.salt` (Linux/macOS) or

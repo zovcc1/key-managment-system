@@ -22,6 +22,14 @@ function RequireSession({ children }: { children: ReactNode }) {
   return <>{children}</>;
 }
 
+/** Blocks deep-links into a section the operator's role can't reach, so
+ * hiding a tab in Shell's nav can't be bypassed by typing the hash route. */
+function RequireScope({ scope, children }: { scope: string; children: ReactNode }) {
+  const { hasScope } = useAuth();
+  if (!hasScope(scope)) return <Navigate to="/dashboard" replace />;
+  return <>{children}</>;
+}
+
 function Routed() {
   const { status } = useAuth();
   return (
@@ -40,11 +48,11 @@ function Routed() {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="map" element={<KeyMap />} />
         <Route path="keys" element={<Keys />} />
-        <Route path="files" element={<Files />} />
-        <Route path="rewrap" element={<Rewrap />} />
+        <Route path="files" element={<RequireScope scope="file_read"><Files /></RequireScope>} />
+        <Route path="rewrap" element={<RequireScope scope="rewrap_manage"><Rewrap /></RequireScope>} />
         <Route path="privacy" element={<Privacy />} />
-        <Route path="audit" element={<Audit />} />
-        <Route path="settings" element={<Settings />} />
+        <Route path="audit" element={<RequireScope scope="audit_read"><Audit /></RequireScope>} />
+        <Route path="settings" element={<RequireScope scope="settings_write"><Settings /></RequireScope>} />
       </Route>
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

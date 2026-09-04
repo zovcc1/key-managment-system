@@ -3,15 +3,15 @@ import { useAuth } from "../auth/AuthContext";
 import { useLocale } from "../i18n/LocaleContext";
 import type { ChromeKey, Locale } from "../i18n/chrome";
 
-const NAV: { to: string; key: ChromeKey; titleKey: ChromeKey }[] = [
+const NAV: { to: string; key: ChromeKey; titleKey: ChromeKey; scope?: string }[] = [
   { to: "/dashboard", key: "nav.dashboard", titleKey: "title.dashboard" },
   { to: "/map", key: "nav.map", titleKey: "title.map" },
   { to: "/keys", key: "nav.keys", titleKey: "title.keys" },
-  { to: "/files", key: "nav.files", titleKey: "title.files" },
-  { to: "/rewrap", key: "nav.rewrap", titleKey: "title.rewrap" },
+  { to: "/files", key: "nav.files", titleKey: "title.files", scope: "file_read" },
+  { to: "/rewrap", key: "nav.rewrap", titleKey: "title.rewrap", scope: "rewrap_manage" },
   { to: "/privacy", key: "nav.privacy", titleKey: "title.privacy" },
-  { to: "/audit", key: "nav.audit", titleKey: "title.audit" },
-  { to: "/settings", key: "nav.settings", titleKey: "title.settings" },
+  { to: "/audit", key: "nav.audit", titleKey: "title.audit", scope: "audit_read" },
+  { to: "/settings", key: "nav.settings", titleKey: "title.settings", scope: "settings_write" },
 ];
 
 function formatCountdown(ms: number): string {
@@ -22,10 +22,11 @@ function formatCountdown(ms: number): string {
 }
 
 export default function Shell() {
-  const { operator, role, provider, lock, msUntilLock } = useAuth();
+  const { operator, role, provider, lock, msUntilLock, hasScope } = useAuth();
   const { t, locale, setLocale } = useLocale();
   const location = useLocation();
   const current = NAV.find((n) => location.pathname.startsWith(n.to));
+  const visibleNav = NAV.filter((n) => !n.scope || hasScope(n.scope));
 
   return (
     <div className="kr-shell">
@@ -33,7 +34,7 @@ export default function Shell() {
         <div className="nav-brand">{t("app.title")}</div>
         <div className="kr-sidebar-tagline">{t("app.tagline")}</div>
         <ul className="kr-navlist">
-          {NAV.map((item) => (
+          {visibleNav.map((item) => (
             <li key={item.to}>
               <NavLink to={item.to} aria-current={location.pathname.startsWith(item.to) ? "page" : undefined}>
                 {t(item.key)}

@@ -67,11 +67,11 @@ fi
 
 echo
 echo "Demo API keys (X-Api-Key header on POST /api/session):"
+echo "  Root  (super-admin): demo-super-admin-root-0e77   (dev-only, all scopes — use this for a full walkthrough)"
 echo "  Alice (key-admin):   demo-key-admin-alice-9f2a"
 echo "  Bob   (key-admin):   demo-key-admin-bob-7c31"
 echo "  Carol (auditor):     demo-auditor-carol-1e88"
 echo "  Dan   (operator):    demo-operator-dan-4b60"
-echo "  Root  (super-admin): demo-super-admin-root-0e77   (dev-only, all scopes)"
 echo
 
 if [[ "$DEV" == true ]]; then
